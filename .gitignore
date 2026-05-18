@@ -4,6 +4,8 @@
 __pycache__/
 *.py[cod]
 .vscode/
+pyproject.toml
+uv.lock
 
 Source/nanoVLM/
 Source/distributed_vlm/.venv/
