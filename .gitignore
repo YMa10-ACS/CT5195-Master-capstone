@@ -1,8 +1,9 @@
+.DS_Store
+**/.DS_Store
+
+__pycache__/
+*.py[cod]
+.vscode/
+
 Source/nanoVLM/
 Source/distributed_vlm/.venv/
-./Study/.DS_Store
-./Assignments/.DS_Store
-./.DS_Store
-./Master_capstone/.DS_Store
-./Master_capstone/PDD/.DS_Store
-./Source/.DS_Store
