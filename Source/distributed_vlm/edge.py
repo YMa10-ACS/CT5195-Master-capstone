@@ -96,7 +96,7 @@ def image_preprocessing(image, model, image_processor):
     if (not hasattr(tokenizer, "global_image_token")
         and splitted_image_ratio[0] * splitted_image_ratio[1] == len(processed_image) - 1):
         processed_image = processed_image[1:]
-    return processed_image
+    return processed_image, splitted_image_ratio
 
 @time_using
 def generate_embedding(processed_image, model, device):
@@ -132,23 +132,30 @@ def generate_embedding(processed_image, model, device):
     return projected
 
 @time_using
-def transfer_embdding(projected):
+def transfer_embdding(projected, splitted_image_ratio):
     # 5) Transfer embedding
-    data = projected.detach().to(torch.float16).cpu().numpy()
+    data = projected.detach().cpu().numpy()
     print("data type:", type(data))
     print("data shape: ", data.shape)
     print("data dtype: ", data.dtype)
     metadata = {
         "shape" : list(data.shape),
-        "dtype" : str(data.dtype)
+        "dtype" : str(data.dtype),
+        "splitted_image_ratio": list(splitted_image_ratio)
     }
 
     payload = data.tobytes()
-    requests.post(
+    response = requests.post(
         "http://127.0.0.1:8000", 
         data=payload,
         headers={"Visual-Meta": json.dumps(metadata)}
     )
+
+    print("status code:", response.status_code)
+    result_json = response.json()
+    text_list = result_json["result"]
+    for i, text in enumerate(text_list, start=1):
+        print(f"  >> Generation {i}: {text}")
 
 def main():
 
@@ -156,11 +163,11 @@ def main():
 
     model, image_processor = load_model(model_weights, device)
 
-    processed_image = image_preprocessing(image, model, image_processor)
+    processed_image, splitted_image_ratio = image_preprocessing(image, model, image_processor)
 
     projected = generate_embedding(processed_image, model, device)    
 
-    transfer_embdding(projected)
+    transfer_embdding(projected, splitted_image_ratio)
 
 
 if __name__ == "__main__":
