@@ -206,6 +206,7 @@ app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
 def receive_embedding():
+    torch.manual_seed(0)
     device = app.config["device"]
     generations = app.config["generations"]
     max_new_tokens = app.config["max_new_tokens"]

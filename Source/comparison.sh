@@ -2,7 +2,7 @@
 set -e
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-IMAGE="$ROOT/distributed_vlm/img/cat.jpg"
+IMAGE="$ROOT/distributed_vlm/img/1.jpg"
 MODEL="lusxvr/nanoVLM-230M-8k"
 PROMPT="What is this?"
 MAX_NEW_TOKENS=300
