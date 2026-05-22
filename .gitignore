@@ -9,3 +9,4 @@ uv.lock
 
 Source/nanoVLM/
 Source/distributed_vlm/.venv/
+Source/distributed_vlm/.continue/agents/new-config.yaml
