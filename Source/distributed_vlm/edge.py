@@ -68,6 +68,7 @@ def load_model(model_weights, device):
     resize_to_max_side_len = getattr(model.cfg, "resize_to_max_side_len", False)
     print("resize to max side len :", resize_to_max_side_len)
 
+    # Create an image processor object with specified parameters
     image_processor = get_image_processor(
         model.cfg.max_img_size,
         model.cfg.vit_img_size,
@@ -163,11 +164,15 @@ def main():
 
     model, image_processor = load_model(model_weights, device)
 
-    processed_image, splitted_image_ratio = image_preprocessing(image, model, image_processor)
-
-    projected = generate_embedding(processed_image, model, device)    
-
-    transfer_embdding(projected, splitted_image_ratio)
+    if isinstance(image, str): # single image
+        processed_image, splitted_image_ratio = image_preprocessing(image, model, image_processor)
+        projected = generate_embedding(processed_image, model, device)    
+        transfer_embdding(projected, splitted_image_ratio)
+    elif isinstance(image, list): # batch of images
+        for img in image:
+            processed_image, splitted_image_ratio = image_preprocessing(img, model, image_processor)
+            projected = generate_embedding(processed_image, model, device)
+            transfer_embdding(projected, splitted_image_ratio)
 
 
 if __name__ == "__main__":

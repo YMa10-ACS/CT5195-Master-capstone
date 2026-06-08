@@ -77,8 +77,7 @@ def construct_prompt(splitted_image_ratio):
     messages = [{"role": "user", "content": image_string + prompt}]
     encoded_prompt = tokenizer.apply_chat_template([messages], tokenize=True, add_generation_prompt=True)
     tokens = torch.tensor(encoded_prompt["input_ids"], dtype=torch.long).to(device)
-
-
+    
     return tokens
 
 def combined_image_and_text_message(tokens, projected):
@@ -226,7 +225,7 @@ def receive_embedding():
             input_ids=tokens,
             token_embd=token_embd,
             max_new_tokens=max_new_tokens,
-            greedy=True,
+            greedy=False,
             temperature=1.0
         )
 

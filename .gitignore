@@ -11,3 +11,4 @@ Source/nanoVLM/
 Source/distributed_vlm/.venv/
 Source/distributed_vlm/.continue/agents/new-config.yaml
 Master_capstone
+/Source/datasets/coco_sample
