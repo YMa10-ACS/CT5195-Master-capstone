@@ -5,19 +5,9 @@ Date: 2026-02-16 00:22:01
 Author: Yaoquan Ma
 '''
 
-import sys
-import os
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-NANOVLM_PATH = os.path.join(PROJECT_ROOT, "nanoVLM")
-BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-sys.path.insert(0, NANOVLM_PATH)
-
-from models.vision_language_model import VisionLanguageModel
-from data.processors import get_tokenizer, get_image_processor, get_image_string
 
 import torch
 import requests
-import numpy as np
 
 from PIL import Image
 import argparse
@@ -26,57 +16,52 @@ import json
 import time
 from functools import wraps
 
+import sys
+import os
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, PROJECT_ROOT)
+NANOVLM_PATH = os.path.join(PROJECT_ROOT, "nanoVLM")
+sys.path.insert(0, NANOVLM_PATH)
+
+from data.processors import get_tokenizer
+from vlm import load_model, init_image_processor, init_tokenizer
+from vlm import construct_prompt, combined_image_and_text_message, generate
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--hf_model", type=str, default="lusxvr/nanoVLM-230M-8k",
+        help="HuggingFace repo ID to download from incase --checkpoint isnt set."
+    )
+    parser.add_argument("--image", type=str, default="assets/image.png",
+                        help="Path to input image")
+    parser.add_argument("--prompt", type=str, default="What is this?",
+                        help="Text prompt to feed the model")
+    parser.add_argument("--generations", type=int, default=5,
+                        help="Num. of outputs to generate")
+    parser.add_argument("--max_new_tokens", type=int, default=300,
+                        help="Maximum number of tokens per output")
+    parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
+    args = parser.parse_args()
+
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    args.device = device
+
+    return args
+
 def time_using(func):
     @wraps(func)
-    def wrapper(*args, **kargs) :
+    def wrapper(*args, **kargs):
         start = time.perf_counter()
 
         result = func(*args, **kargs)
 
         end = time.perf_counter()
         print(f"[timeing] {func.__name__}: {end - start} seconds")
-        
+
         return result
     return wrapper
-
-@time_using
-def parameter_process():
-    default_image = os.path.join(BASE_PATH, "img", "cat.jpg")
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
-    parser.add_argument("--image", default=default_image)
-    args = parser.parse_args()
-
-    # 1) Device selection
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
-    print("Using device:", device)
-
-    # 2) Load model
-    model_weights = args.weights
-    image = args.image
-    return device, model_weights, image
-
-
-@time_using
-def load_model(model_weights, device):
-    # 1) Load pretrained model 
-    model = VisionLanguageModel.from_pretrained(model_weights)
-    model.eval().to(device)
-
-    # 2) Build image processor (same as generate.py style)
-    resize_to_max_side_len = getattr(model.cfg, "resize_to_max_side_len", False)
-    print("resize to max side len :", resize_to_max_side_len)
-
-    # Create an image processor object with specified parameters
-    image_processor = get_image_processor(
-        model.cfg.max_img_size,
-        model.cfg.vit_img_size,
-        resize_to_max_side_len
-    )
-    print("image processor : ", image_processor)
-
-    return model, image_processor
 
 @time_using
 def image_preprocessing(image, model, image_processor):
@@ -133,7 +118,7 @@ def generate_embedding(processed_image, model, device):
     return projected
 
 @time_using
-def transfer_embdding(projected, splitted_image_ratio):
+def transfer_embdding(projected, splitted_image_ratio, prompt, generations):
     # 5) Transfer embedding
     data = projected.detach().cpu().numpy()
     print("data type:", type(data))
@@ -142,7 +127,9 @@ def transfer_embdding(projected, splitted_image_ratio):
     metadata = {
         "shape" : list(data.shape),
         "dtype" : str(data.dtype),
-        "splitted_image_ratio": list(splitted_image_ratio)
+        "prompt": str(prompt),
+        "splitted_image_ratio": list(splitted_image_ratio),
+        "generations": int(generations)
     }
 
     payload = data.tobytes()
@@ -154,25 +141,63 @@ def transfer_embdding(projected, splitted_image_ratio):
 
     print("status code:", response.status_code)
     result_json = response.json()
-    text_list = result_json["result"]
-    for i, text in enumerate(text_list, start=1):
+    result_list = result_json["result"]
+    for i, text in enumerate(result_list, start=1):
         print(f"  >> Generation {i}: {text}")
+    
+    return result_list
+
+def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokonizer, generations, max_new_tokens) :
+    tokens = construct_prompt(model, device, prompt, text_tokonizer, splitted_image_ratio)
+
+    token_embd = combined_image_and_text_message(model, tokens, projected)
+
+    text_list = generate(
+                model,
+                generations,
+                device=device,
+                input_ids=tokens,
+                token_embd=token_embd,
+                max_new_tokens=max_new_tokens,
+                greedy=True,
+                temperature=1.0
+            )
+    return text_list
 
 def main():
+    app_name = os.path.basename(__file__)
+    print(f"{app_name} startup...")
+    args = parse_args()
 
-    device, model_weights, image = parameter_process()
+    model = load_model(args.weights, args.device)
+    image_processor = init_image_processor(model)
+    text_tokonizer = init_tokenizer(model)
 
-    model, image_processor = load_model(model_weights, device)
-
-    if isinstance(image, str): # single image
-        processed_image, splitted_image_ratio = image_preprocessing(image, model, image_processor)
-        projected = generate_embedding(processed_image, model, device)    
-        transfer_embdding(projected, splitted_image_ratio)
-    elif isinstance(image, list): # batch of images
-        for img in image:
+    result_list = []
+    nanovlm_list = []
+    if isinstance(args.image, str): # single image
+        processed_image, splitted_image_ratio = image_preprocessing(args.image, model, image_processor)
+        projected = generate_embedding(processed_image, model, args.device)    
+        result_list = transfer_embdding(projected, splitted_image_ratio, args.prompt, args.generations)
+        nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
+    elif isinstance(args.image, list): # batch of images
+        for img in args.image:
             processed_image, splitted_image_ratio = image_preprocessing(img, model, image_processor)
-            projected = generate_embedding(processed_image, model, device)
-            transfer_embdding(projected, splitted_image_ratio)
+            projected = generate_embedding(processed_image, model, args.device)
+            result_list = transfer_embdding(projected, splitted_image_ratio, args.prompt, args.generations)
+            nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
+
+    unmatched_pair = 0
+    matched_pair = 0
+    for s1, s2 in zip(result_list, nanovlm_list) :
+        if s1 != s2 :
+            print(f"split leanring generate text : {s1}")
+            print(f"nanoVLM generate text: {s2}")
+            unmatched_pair += 1
+        else :
+            matched_pair += 1
+
+    print(f"unmatch pair / matched pair = {unmatched_pair}/{matched_pair}")
 
 
 if __name__ == "__main__":
