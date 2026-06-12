@@ -36,8 +36,6 @@ def parse_args():
                         help="Path to input image")
     parser.add_argument("--prompt", type=str, default="What is this?",
                         help="Text prompt to feed the model")
-    parser.add_argument("--generations", type=int, default=5,
-                        help="Num. of outputs to generate")
     parser.add_argument("--max_new_tokens", type=int, default=300,
                         help="Maximum number of tokens per output")
     parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
@@ -114,7 +112,6 @@ if __name__ == "__main__":
 
     app.config["prompt"] = args.prompt
     app.config["max_new_tokens"] = args.max_new_tokens
-    app.config["generations"] = args.generations
     app.config["device"] = args.device
 
     app.run(host=args.host, port=args.port)
