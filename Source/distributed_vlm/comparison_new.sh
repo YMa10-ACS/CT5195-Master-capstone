@@ -7,7 +7,7 @@
 set -e
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-IMAGE_DIR="$ROOT/../datasets/coco_sample/Data/"
+IMAGE_DIR="$ROOT/../datasets/ai2d/"
 MODEL="lusxvr/nanoVLM-230M-8k"
 PROMPT="What is this?"
 MAX_NEW_TOKENS=300
