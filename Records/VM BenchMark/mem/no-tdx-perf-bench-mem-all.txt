@@ -1,0 +1,274 @@
+no-tdx@instance-no-tdx:~$ sudo perf bench mem all
+# Running mem/memcpy benchmark...
+# function 'default' (Default memcpy() provided by glibc)
+# Copying 1MB bytes ...
+
+      18.780048 GB/sec
+# function 'x86-64-unrolled' (unrolled memcpy() in arch/x86/lib/memcpy_64.S)
+# Copying 1MB bytes ...
+
+      15.751008 GB/sec
+# function 'x86-64-movsq' (movsq-based memcpy() in arch/x86/lib/memcpy_64.S)
+# Copying 1MB bytes ...
+
+      19.148284 GB/sec
+
+# Running mem/memset benchmark...
+# function 'default' (Default memset() provided by glibc)
+# Copying 1MB bytes ...
+
+      24.414062 GB/sec
+# function 'x86-64-unrolled' (unrolled memset() in arch/x86/lib/memset_64.S)
+# Copying 1MB bytes ...
+
+      26.393581 GB/sec
+# function 'x86-64-stosq' (movsq-based memset() in arch/x86/lib/memset_64.S)
+# Copying 1MB bytes ...
+
+      34.877232 GB/sec
+
+# Running mem/find_bit benchmark...
+100000 operations 1 bits set of 1 bits
+  Average for_each_set_bit took: 659.600 usec (+- 8.600 usec)
+  Average test_bit loop took:    364.200 usec (+- 6.328 usec)
+100000 operations 1 bits set of 2 bits
+  Average for_each_set_bit took: 722.400 usec (+- 5.955 usec)
+  Average test_bit loop took:    593.000 usec (+- 8.295 usec)
+100000 operations 2 bits set of 2 bits
+  Average for_each_set_bit took: 992.000 usec (+- 89.960 usec)
+  Average test_bit loop took:    645.300 usec (+- 18.197 usec)
+100000 operations 1 bits set of 4 bits
+  Average for_each_set_bit took: 720.200 usec (+- 2.653 usec)
+  Average test_bit loop took:    1051.200 usec (+- 5.669 usec)
+100000 operations 2 bits set of 4 bits
+  Average for_each_set_bit took: 1034.400 usec (+- 104.768 usec)
+  Average test_bit loop took:    1109.900 usec (+- 20.631 usec)
+100000 operations 4 bits set of 4 bits
+  Average for_each_set_bit took: 1637.133 usec (+- 237.918 usec)
+  Average test_bit loop took:    1166.467 usec (+- 25.762 usec)
+100000 operations 1 bits set of 8 bits
+  Average for_each_set_bit took: 729.000 usec (+- 11.032 usec)
+  Average test_bit loop took:    1994.000 usec (+- 9.418 usec)
+100000 operations 2 bits set of 8 bits
+  Average for_each_set_bit took: 1044.800 usec (+- 105.509 usec)
+  Average test_bit loop took:    2038.600 usec (+- 16.049 usec)
+100000 operations 4 bits set of 8 bits
+  Average for_each_set_bit took: 1688.333 usec (+- 252.853 usec)
+  Average test_bit loop took:    2106.467 usec (+- 28.243 usec)
+100000 operations 8 bits set of 8 bits
+  Average for_each_set_bit took: 2976.550 usec (+- 545.307 usec)
+  Average test_bit loop took:    2222.250 usec (+- 50.725 usec)
+100000 operations 1 bits set of 16 bits
+  Average for_each_set_bit took: 730.000 usec (+- 7.583 usec)
+  Average test_bit loop took:    3882.600 usec (+- 12.331 usec)
+100000 operations 2 bits set of 16 bits
+  Average for_each_set_bit took: 1039.200 usec (+- 103.164 usec)
+  Average test_bit loop took:    3931.500 usec (+- 17.856 usec)
+100000 operations 4 bits set of 16 bits
+  Average for_each_set_bit took: 1685.733 usec (+- 253.536 usec)
+  Average test_bit loop took:    4004.400 usec (+- 29.998 usec)
+100000 operations 8 bits set of 16 bits
+  Average for_each_set_bit took: 3021.300 usec (+- 563.177 usec)
+  Average test_bit loop took:    4136.000 usec (+- 57.429 usec)
+100000 operations 16 bits set of 16 bits
+  Average for_each_set_bit took: 5457.640 usec (+- 1090.948 usec)
+  Average test_bit loop took:    4312.560 usec (+- 85.500 usec)
+100000 operations 1 bits set of 32 bits
+  Average for_each_set_bit took: 726.400 usec (+- 7.607 usec)
+  Average test_bit loop took:    7607.800 usec (+- 24.758 usec)
+100000 operations 2 bits set of 32 bits
+  Average for_each_set_bit took: 1045.800 usec (+- 107.052 usec)
+  Average test_bit loop took:    7670.400 usec (+- 25.061 usec)
+100000 operations 4 bits set of 32 bits
+  Average for_each_set_bit took: 1691.733 usec (+- 254.010 usec)
+  Average test_bit loop took:    7744.133 usec (+- 32.813 usec)
+100000 operations 8 bits set of 32 bits
+  Average for_each_set_bit took: 3024.400 usec (+- 562.209 usec)
+  Average test_bit loop took:    7877.500 usec (+- 58.396 usec)
+100000 operations 16 bits set of 32 bits
+  Average for_each_set_bit took: 5500.960 usec (+- 1105.626 usec)
+  Average test_bit loop took:    8101.440 usec (+- 102.644 usec)
+100000 operations 32 bits set of 32 bits
+  Average for_each_set_bit took: 10327.433 usec (+- 2204.404 usec)
+  Average test_bit loop took:    8412.167 usec (+- 155.392 usec)
+100000 operations 1 bits set of 64 bits
+  Average for_each_set_bit took: 727.000 usec (+- 6.058 usec)
+  Average test_bit loop took:    15205.600 usec (+- 10.284 usec)
+100000 operations 2 bits set of 64 bits
+  Average for_each_set_bit took: 1054.200 usec (+- 109.251 usec)
+  Average test_bit loop took:    15237.800 usec (+- 12.695 usec)
+100000 operations 4 bits set of 64 bits
+  Average for_each_set_bit took: 1713.400 usec (+- 259.235 usec)
+  Average test_bit loop took:    15305.267 usec (+- 27.101 usec)
+100000 operations 8 bits set of 64 bits
+  Average for_each_set_bit took: 3067.450 usec (+- 571.519 usec)
+  Average test_bit loop took:    15421.500 usec (+- 50.674 usec)
+100000 operations 16 bits set of 64 bits
+  Average for_each_set_bit took: 5577.640 usec (+- 1121.180 usec)
+  Average test_bit loop took:    15632.160 usec (+- 95.085 usec)
+100000 operations 32 bits set of 64 bits
+  Average for_each_set_bit took: 10095.600 usec (+- 2094.334 usec)
+  Average test_bit loop took:    15997.567 usec (+- 171.217 usec)
+100000 operations 64 bits set of 64 bits
+  Average for_each_set_bit took: 18645.514 usec (+- 4013.344 usec)
+  Average test_bit loop took:    16537.857 usec (+- 270.353 usec)
+100000 operations 1 bits set of 128 bits
+  Average for_each_set_bit took: 762.600 usec (+- 10.505 usec)
+  Average test_bit loop took:    30218.400 usec (+- 5.202 usec)
+100000 operations 2 bits set of 128 bits
+  Average for_each_set_bit took: 1085.300 usec (+- 107.741 usec)
+  Average test_bit loop took:    30250.100 usec (+- 12.266 usec)
+100000 operations 4 bits set of 128 bits
+  Average for_each_set_bit took: 1752.133 usec (+- 261.723 usec)
+  Average test_bit loop took:    30290.400 usec (+- 20.649 usec)
+100000 operations 8 bits set of 128 bits
+  Average for_each_set_bit took: 3103.050 usec (+- 570.972 usec)
+  Average test_bit loop took:    30407.250 usec (+- 48.929 usec)
+100000 operations 16 bits set of 128 bits
+  Average for_each_set_bit took: 5611.600 usec (+- 1120.391 usec)
+  Average test_bit loop took:    30614.320 usec (+- 93.098 usec)
+100000 operations 32 bits set of 128 bits
+  Average for_each_set_bit took: 10133.500 usec (+- 2095.509 usec)
+  Average test_bit loop took:    30988.200 usec (+- 173.790 usec)
+100000 operations 64 bits set of 128 bits
+  Average for_each_set_bit took: 18480.286 usec (+- 3937.745 usec)
+  Average test_bit loop took:    31767.286 usec (+- 359.739 usec)
+100000 operations 128 bits set of 128 bits
+  Average for_each_set_bit took: 33632.400 usec (+- 7282.585 usec)
+  Average test_bit loop took:    32772.600 usec (+- 529.286 usec)
+100000 operations 1 bits set of 256 bits
+  Average for_each_set_bit took: 825.400 usec (+- 8.394 usec)
+  Average test_bit loop took:    61356.400 usec (+- 11.259 usec)
+100000 operations 2 bits set of 256 bits
+  Average for_each_set_bit took: 1168.100 usec (+- 114.432 usec)
+  Average test_bit loop took:    60863.900 usec (+- 164.801 usec)
+100000 operations 4 bits set of 256 bits
+  Average for_each_set_bit took: 1819.867 usec (+- 257.494 usec)
+  Average test_bit loop took:    61099.733 usec (+- 143.538 usec)
+100000 operations 8 bits set of 256 bits
+  Average for_each_set_bit took: 3197.150 usec (+- 579.787 usec)
+  Average test_bit loop took:    61429.100 usec (+- 169.409 usec)
+100000 operations 16 bits set of 256 bits
+  Average for_each_set_bit took: 5714.720 usec (+- 1126.613 usec)
+  Average test_bit loop took:    61705.440 usec (+- 178.820 usec)
+100000 operations 32 bits set of 256 bits
+  Average for_each_set_bit took: 10235.700 usec (+- 2097.465 usec)
+  Average test_bit loop took:    62110.133 usec (+- 225.318 usec)
+100000 operations 64 bits set of 256 bits
+  Average for_each_set_bit took: 18728.571 usec (+- 3993.115 usec)
+  Average test_bit loop took:    62730.914 usec (+- 324.536 usec)
+100000 operations 128 bits set of 256 bits
+  Average for_each_set_bit took: 33646.125 usec (+- 7218.382 usec)
+  Average test_bit loop took:    63963.850 usec (+- 594.451 usec)
+100000 operations 256 bits set of 256 bits
+  Average for_each_set_bit took: 60920.933 usec (+- 13278.169 usec)
+  Average test_bit loop took:    65604.222 usec (+- 876.213 usec)
+100000 operations 1 bits set of 512 bits
+  Average for_each_set_bit took: 996.000 usec (+- 15.931 usec)
+  Average test_bit loop took:    121153.200 usec (+- 10.485 usec)
+100000 operations 2 bits set of 512 bits
+  Average for_each_set_bit took: 1394.400 usec (+- 134.635 usec)
+  Average test_bit loop took:    121697.400 usec (+- 181.866 usec)
+100000 operations 4 bits set of 512 bits
+  Average for_each_set_bit took: 2046.733 usec (+- 261.845 usec)
+  Average test_bit loop took:    121605.533 usec (+- 124.028 usec)
+100000 operations 8 bits set of 512 bits
+  Average for_each_set_bit took: 3375.450 usec (+- 562.720 usec)
+  Average test_bit loop took:    121586.700 usec (+- 94.274 usec)
+100000 operations 16 bits set of 512 bits
+  Average for_each_set_bit took: 5913.440 usec (+- 1128.766 usec)
+  Average test_bit loop took:    121712.080 usec (+- 90.868 usec)
+100000 operations 32 bits set of 512 bits
+  Average for_each_set_bit took: 10872.300 usec (+- 2262.389 usec)
+  Average test_bit loop took:    122006.167 usec (+- 143.623 usec)
+100000 operations 64 bits set of 512 bits
+  Average for_each_set_bit took: 19297.457 usec (+- 4033.422 usec)
+  Average test_bit loop took:    122597.114 usec (+- 276.974 usec)
+100000 operations 128 bits set of 512 bits
+  Average for_each_set_bit took: 34175.850 usec (+- 7220.970 usec)
+  Average test_bit loop took:    123753.850 usec (+- 546.529 usec)
+100000 operations 256 bits set of 512 bits
+  Average for_each_set_bit took: 60958.400 usec (+- 13095.838 usec)
+  Average test_bit loop took:    126052.578 usec (+- 1093.768 usec)
+100000 operations 512 bits set of 512 bits
+  Average for_each_set_bit took: 110663.080 usec (+- 24338.781 usec)
+  Average test_bit loop took:    129115.420 usec (+- 1640.313 usec)
+100000 operations 1 bits set of 1024 bits
+  Average for_each_set_bit took: 1478.800 usec (+- 26.921 usec)
+  Average test_bit loop took:    241523.800 usec (+- 23.840 usec)
+100000 operations 2 bits set of 1024 bits
+  Average for_each_set_bit took: 1847.500 usec (+- 123.589 usec)
+  Average test_bit loop took:    242034.400 usec (+- 170.694 usec)
+100000 operations 4 bits set of 1024 bits
+  Average for_each_set_bit took: 2562.067 usec (+- 281.943 usec)
+  Average test_bit loop took:    242884.000 usec (+- 340.103 usec)
+100000 operations 8 bits set of 1024 bits
+  Average for_each_set_bit took: 3850.050 usec (+- 553.048 usec)
+  Average test_bit loop took:    242664.850 usec (+- 267.578 usec)
+100000 operations 16 bits set of 1024 bits
+  Average for_each_set_bit took: 6762.680 usec (+- 1267.991 usec)
+  Average test_bit loop took:    242580.760 usec (+- 217.746 usec)
+100000 operations 32 bits set of 1024 bits
+  Average for_each_set_bit took: 11634.367 usec (+- 2280.523 usec)
+  Average test_bit loop took:    242763.400 usec (+- 196.091 usec)
+100000 operations 64 bits set of 1024 bits
+  Average for_each_set_bit took: 20011.657 usec (+- 4023.280 usec)
+  Average test_bit loop took:    243299.829 usec (+- 281.031 usec)
+100000 operations 128 bits set of 1024 bits
+  Average for_each_set_bit took: 34836.425 usec (+- 7196.818 usec)
+  Average test_bit loop took:    244483.225 usec (+- 560.293 usec)
+100000 operations 256 bits set of 1024 bits
+  Average for_each_set_bit took: 61585.556 usec (+- 13072.925 usec)
+  Average test_bit loop took:    246603.222 usec (+- 1031.914 usec)
+100000 operations 512 bits set of 1024 bits
+  Average for_each_set_bit took: 110354.900 usec (+- 23978.619 usec)
+  Average test_bit loop took:    250751.340 usec (+- 2005.417 usec)
+100000 operations 1024 bits set of 1024 bits
+  Average for_each_set_bit took: 201722.345 usec (+- 44947.004 usec)
+  Average test_bit loop took:    256429.036 usec (+- 3047.678 usec)
+100000 operations 1 bits set of 2048 bits
+  Average for_each_set_bit took: 2051.000 usec (+- 4.583 usec)
+  Average test_bit loop took:    482213.400 usec (+- 25.167 usec)
+100000 operations 2 bits set of 2048 bits
+  Average for_each_set_bit took: 2466.900 usec (+- 138.717 usec)
+  Average test_bit loop took:    482754.600 usec (+- 182.763 usec)
+100000 operations 4 bits set of 2048 bits
+  Average for_each_set_bit took: 3126.133 usec (+- 265.515 usec)
+  Average test_bit loop took:    483609.200 usec (+- 344.805 usec)
+100000 operations 8 bits set of 2048 bits
+  Average for_each_set_bit took: 4519.150 usec (+- 587.668 usec)
+  Average test_bit loop took:    485050.400 usec (+- 627.511 usec)
+100000 operations 16 bits set of 2048 bits
+  Average for_each_set_bit took: 6921.880 usec (+- 1086.697 usec)
+  Average test_bit loop took:    484641.840 usec (+- 526.909 usec)
+100000 operations 32 bits set of 2048 bits
+  Average for_each_set_bit took: 11748.233 usec (+- 2197.858 usec)
+  Average test_bit loop took:    484474.833 usec (+- 443.284 usec)
+100000 operations 64 bits set of 2048 bits
+  Average for_each_set_bit took: 20205.914 usec (+- 4019.324 usec)
+  Average test_bit loop took:    484796.400 usec (+- 402.478 usec)
+100000 operations 128 bits set of 2048 bits
+  Average for_each_set_bit took: 35108.375 usec (+- 7223.881 usec)
+  Average test_bit loop took:    485727.700 usec (+- 529.600 usec)
+100000 operations 256 bits set of 2048 bits
+  Average for_each_set_bit took: 61900.644 usec (+- 13100.718 usec)
+  Average test_bit loop took:    487607.689 usec (+- 929.700 usec)
+100000 operations 512 bits set of 2048 bits
+  Average for_each_set_bit took: 110743.120 usec (+- 24018.188 usec)
+  Average test_bit loop took:    491423.700 usec (+- 1836.893 usec)
+100000 operations 1024 bits set of 2048 bits
+  Average for_each_set_bit took: 200468.509 usec (+- 44347.855 usec)
+  Average test_bit loop took:    498513.455 usec (+- 3477.612 usec)
+100000 operations 2048 bits set of 2048 bits
+  Average for_each_set_bit took: 369663.117 usec (+- 83589.820 usec)
+  Average test_bit loop took:    508916.033 usec (+- 5507.798 usec)
+
+# Running mem/mmap benchmark...
+# function 'demand' (Demand loaded mmap())
+# Copying 1MB bytes ...
+
+       2.244971 GB/sec
+# function 'populate' (Eagerly populated mmap())
+# Copying 1MB bytes ...
+
+       5.644870 GB/sec

@@ -1,0 +1,21 @@
+gcp-tdx@instance-tdx:~$  sudo perf bench epoll all
+# Running epoll/wait benchmark...
+Run summary [PID 5730]: 3 threads monitoring on 64 file-descriptors for 8 secs.
+
+[thread  0] fdmap: 0x5755cf6905e0 ... 0x5755cf6906dc [ 271505 ops/sec ]
+[thread  1] fdmap: 0x5755cf690790 ... 0x5755cf69088c [ 251276 ops/sec ]
+[thread  2] fdmap: 0x5755cf690a80 ... 0x5755cf690b7c [ 272038 ops/sec ]
+
+Averaged 264939 operations/sec (+- 2.58%), total secs = 8
+
+# Running epoll/ctl benchmark...
+Run summary [PID 5730]: 4 threads doing epoll_ctl ops 64 file-descriptors for 8 secs.
+
+[thread  0] fdmap: 0x5755cf690a80 ... 0x5755cf690b7c [ add: 1218944 ops; mod: 1218944 ops; del: 1218944 ops ]
+[thread  1] fdmap: 0x5755cf690790 ... 0x5755cf69088c [ add: 1212736 ops; mod: 1212736 ops; del: 1212736 ops ]
+[thread  2] fdmap: 0x5755cf6905e0 ... 0x5755cf6906dc [ add: 1202944 ops; mod: 1202944 ops; del: 1202944 ops ]
+[thread  3] fdmap: 0x5755cf6913e0 ... 0x5755cf6914dc [ add: 1202432 ops; mod: 1202432 ops; del: 1202432 ops ]
+
+Averaged 1209264 ADD operations (+- 0.33%)
+Averaged 1209264 MOD operations (+- 0.33%)
+Averaged 1209264 DEL operations (+- 0.33%)

@@ -1,0 +1,218 @@
+for i in $(seq 1 10); do
+  echo "===== Run $i: $(date -Is) ====="
+  uname -r
+  perf bench sched messaging
+  perf bench sched pipe
+  perf bench sched seccomp-notify
+  sleep 10
+done | tee ~/tdx-benchmark-results/sched_$(hostname)_$(date +%F_%H%M).txt
+===== Run 1: 2026-06-22T14:40:50+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.475 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 3.230 [sec]
+
+       3.230887 usecs/op
+         309512 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 9.967 [sec]
+
+       9.967567 usecs/op
+         100325 ops/sec
+===== Run 2: 2026-06-22T14:41:14+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.474 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 2.939 [sec]
+
+       2.939635 usecs/op
+         340178 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 10.048 [sec]
+
+      10.048972 usecs/op
+          99512 ops/sec
+===== Run 3: 2026-06-22T14:41:38+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.479 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 2.927 [sec]
+
+       2.927095 usecs/op
+         341635 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 10.035 [sec]
+
+      10.035640 usecs/op
+          99644 ops/sec
+===== Run 4: 2026-06-22T14:42:01+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.485 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 3.142 [sec]
+
+       3.142706 usecs/op
+         318197 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 10.064 [sec]
+
+      10.064232 usecs/op
+          99361 ops/sec
+===== Run 5: 2026-06-22T14:42:25+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.492 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 3.018 [sec]
+
+       3.018157 usecs/op
+         331328 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 9.977 [sec]
+
+       9.977519 usecs/op
+         100225 ops/sec
+===== Run 6: 2026-06-22T14:42:49+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.486 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 3.095 [sec]
+
+       3.095556 usecs/op
+         323043 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 9.929 [sec]
+
+       9.929661 usecs/op
+         100708 ops/sec
+===== Run 7: 2026-06-22T14:43:12+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.477 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 3.205 [sec]
+
+       3.205899 usecs/op
+         311924 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 10.042 [sec]
+
+      10.042860 usecs/op
+          99573 ops/sec
+===== Run 8: 2026-06-22T14:43:36+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.496 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 3.036 [sec]
+
+       3.036848 usecs/op
+         329288 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 10.043 [sec]
+
+      10.043314 usecs/op
+          99568 ops/sec
+===== Run 9: 2026-06-22T14:44:00+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.481 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 2.981 [sec]
+
+       2.981896 usecs/op
+         335357 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 9.990 [sec]
+
+       9.990690 usecs/op
+         100093 ops/sec
+===== Run 10: 2026-06-22T14:44:24+00:00 =====
+7.0.0-1005-gcp
+# Running 'sched/messaging' benchmark:
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.475 [sec]
+# Running 'sched/pipe' benchmark:
+# Executed 1000000 pipe operations between two processes
+
+     Total time: 3.013 [sec]
+
+       3.013586 usecs/op
+         331830 ops/sec
+# Running 'sched/seccomp-notify' benchmark:
+# Executed 1000000 system calls
+
+     Total time: 10.007 [sec]
+
+      10.007369 usecs/op
+          99926 ops/sec

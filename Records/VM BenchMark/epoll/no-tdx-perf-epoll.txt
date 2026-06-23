@@ -1,0 +1,21 @@
+no-tdx@instance-no-tdx:~$ sudo perf bench epoll all
+# Running epoll/wait benchmark...
+Run summary [PID 5956]: 3 threads monitoring on 64 file-descriptors for 8 secs.
+
+[thread  0] fdmap: 0x55e58b03e5e0 ... 0x55e58b03e6dc [ 357062 ops/sec ]
+[thread  1] fdmap: 0x55e58b03e790 ... 0x55e58b03e88c [ 322792 ops/sec ]
+[thread  2] fdmap: 0x55e58b03ea80 ... 0x55e58b03eb7c [ 357497 ops/sec ]
+
+Averaged 345783 operations/sec (+- 3.32%), total secs = 8
+
+# Running epoll/ctl benchmark...
+Run summary [PID 5956]: 4 threads doing epoll_ctl ops 64 file-descriptors for 8 secs.
+
+[thread  0] fdmap: 0x55e58b03ea80 ... 0x55e58b03eb7c [ add: 1301824 ops; mod: 1301824 ops; del: 1301824 ops ]
+[thread  1] fdmap: 0x55e58b03e790 ... 0x55e58b03e88c [ add: 1279360 ops; mod: 1279360 ops; del: 1279360 ops ]
+[thread  2] fdmap: 0x55e58b03e5e0 ... 0x55e58b03e6dc [ add: 1296128 ops; mod: 1296128 ops; del: 1296128 ops ]
+[thread  3] fdmap: 0x55e58b03f3e0 ... 0x55e58b03f4dc [ add: 1291392 ops; mod: 1291392 ops; del: 1291392 ops ]
+
+Averaged 1292176 ADD operations (+- 0.37%)
+Averaged 1292176 MOD operations (+- 0.37%)
+Averaged 1292176 DEL operations (+- 0.37%)
