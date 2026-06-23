@@ -148,6 +148,19 @@ def transfer_embdding(projected, splitted_image_ratio, prompt, generations):
     return result_list
 
 def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokonizer, generations, max_new_tokens) :
+    
+    # Print generate_text_by_embedding parameters for comparison with the cloud service.
+    print(
+        "generate_text_by_embedding parameters:\n"
+        f"  device: {device}\n"
+        f"  prompt: {prompt}\n"
+        f"  project_shape: {tuple(projected.shape)}\n"
+        f"  split_ratio: {splitted_image_ratio}\n"
+        f"  max_new_tokens: {max_new_tokens}"
+        f"  generations: {generations}"
+    )
+
+
     tokens = construct_prompt(model, device, prompt, text_tokonizer, splitted_image_ratio)
 
     token_embd = combined_image_and_text_message(model, tokens, projected)
@@ -175,17 +188,12 @@ def main():
 
     result_list = []
     nanovlm_list = []
-    if isinstance(args.image, str): # single image
-        processed_image, splitted_image_ratio = image_preprocessing(args.image, model, image_processor)
-        projected = generate_embedding(processed_image, model, args.device)    
-        result_list = transfer_embdding(projected, splitted_image_ratio, args.prompt, args.generations)
-        nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
-    elif isinstance(args.image, list): # batch of images
-        for img in args.image:
-            processed_image, splitted_image_ratio = image_preprocessing(img, model, image_processor)
-            projected = generate_embedding(processed_image, model, args.device)
-            result_list = transfer_embdding(projected, splitted_image_ratio, args.prompt, args.generations)
-            nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
+    
+    processed_image, splitted_image_ratio = image_preprocessing(args.image, model, image_processor)
+    projected = generate_embedding(processed_image, model, args.device)
+    result_list = transfer_embdding(projected, splitted_image_ratio, args.prompt, args.generations)
+    nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
+
 
     unmatched_pair = 0
     matched_pair = 0

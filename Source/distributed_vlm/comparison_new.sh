@@ -4,7 +4,6 @@
  # @Date: 2026-06-07 01:42:34
  # @Author: Yaoquan Ma
 ### 
-set -e
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 IMAGE_DIR="$ROOT/../datasets/ai2d/"
@@ -16,7 +15,8 @@ MAX_IMAGES=20
 
 CLOUD_LOG="/tmp/distributed_vlm_cloud.log"
 
-
+# Kill the cloud service before testing.
+kill -9 `sudo lsof -ntP -iTCP:8000 -sTCP:LISTEN`
 
 cd "$ROOT"
 
@@ -25,7 +25,7 @@ python3 ./cloud.py \
   --weights "$MODEL" \
   --prompt "$PROMPT" \
   --max_new_tokens "$MAX_NEW_TOKENS" \
-  > "$CLOUD_LOG" 2>&1 &
+  | tee "$CLOUD_LOG" 2>&1 &
 
 CLOUD_PID=$!
 
@@ -51,7 +51,7 @@ find "$IMAGE_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png"
     --weights "$MODEL" \
     --image "$IMAGE" \
   	--generations "$GENERATIONS" \
-    > "$EDGE_LOG" 2>&1
+    | tee "$EDGE_LOG" 2>&1
   echo
 
   cat $EDGE_LOG | grep "Generation"

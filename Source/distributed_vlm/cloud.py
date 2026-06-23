@@ -80,8 +80,15 @@ def receive_embedding():
     max_new_tokens = app.config["max_new_tokens"]
 
     projected, splitted_image_ratio, generations = reconstruct_from_request(device)
-    print(f"project = {projected}, splitted image ratio = {splitted_image_ratio}, generations = {generations}")
-
+    print(
+        "receive_embedding parameters:\n"
+        f"  device: {device}\n"
+        f"  prompt: {prompt}\n"
+        f"  project_shape: {tuple(projected.shape)}\n"
+        f"  split_ratio: {splitted_image_ratio}\n"
+        f"  max_new_tokens: {max_new_tokens}"
+        f"  generations: {generations}"
+    )
     # prompt -> input_ids
     tokens = construct_prompt(model, device, prompt, tokenizer, splitted_image_ratio)
 
