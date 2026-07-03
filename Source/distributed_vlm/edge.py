@@ -43,6 +43,11 @@ def parse_args():
     parser.add_argument("--max_new_tokens", type=int, default=300,
                         help="Maximum number of tokens per output")
     parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
+    parser.add_argument("--transport", choices=["http", "https-aes-gcm", "https-chacha20"], default="http",
+                        help="Transport protocol used to send visual embeddings")
+    parser.add_argument("--ca_cert", default=f"{PROJECT_ROOT}/cert/cert.pem", type=str, 
+                        help="Path to CA certificate for HTTPS requests")
+
     args = parser.parse_args()
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -118,7 +123,7 @@ def generate_embedding(processed_image, model, device):
     return projected
 
 @time_using
-def transfer_embdding(projected, splitted_image_ratio, prompt, generations):
+def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_ratio, prompt, generations):
     # 5) Transfer embedding
     data = projected.detach().cpu().numpy()
     print("data type:", type(data))
@@ -133,11 +138,23 @@ def transfer_embdding(projected, splitted_image_ratio, prompt, generations):
     }
 
     payload = data.tobytes()
-    response = requests.post(
-        "http://127.0.0.1:8000", 
-        data=payload,
-        headers={"Visual-Meta": json.dumps(metadata)}
-    )
+    if transport_protocol == "http":
+        response = requests.post(
+            "http://127.0.0.1:8000", 
+            data=payload,
+            headers={"Visual-Meta": json.dumps(metadata)}
+        )
+    elif transport_protocol == "https-aes-gcm" or transport_protocol == "https-chacha20":
+        if transport_protocol == "https-aes-gcm":
+            target_url = "https://127.0.0.1:8443"
+        elif transport_protocol == "https-chacha20":
+            target_url = "https://127.0.0.1:8444"
+        response = requests.post(
+            target_url,
+            data=payload,
+            headers={"Visual-Meta": json.dumps(metadata)},
+            verify=ca_cert
+        )
 
     print("status code:", response.status_code)
     result_json = response.json()
@@ -191,7 +208,7 @@ def main():
     
     processed_image, splitted_image_ratio = image_preprocessing(args.image, model, image_processor)
     projected = generate_embedding(processed_image, model, args.device)
-    result_list = transfer_embdding(projected, splitted_image_ratio, args.prompt, args.generations)
+    result_list = transfer_embdding(args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
     nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
 
 

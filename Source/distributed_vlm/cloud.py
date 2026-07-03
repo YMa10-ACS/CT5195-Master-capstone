@@ -40,7 +40,8 @@ def parse_args():
                         help="Maximum number of tokens per output")
     parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--http-port", type=int, default=8000)
+    parser.add_argument("--https-port", type=int, default=8080)
     args = parser.parse_args()
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
