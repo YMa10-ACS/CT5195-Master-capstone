@@ -12,16 +12,20 @@ PROMPT="What is this?"
 MAX_NEW_TOKENS=300
 GENERATIONS=1
 MAX_IMAGES=20
+HTTP_MODE="https-aes-gcm"
 
 CLOUD_LOG="/tmp/distributed_vlm_cloud.log"
 
 # Kill the cloud service before testing.
 kill -9 `sudo lsof -ntP -iTCP:8000 -sTCP:LISTEN`
+kill -9 `sudo lsof -ntP -iTCP:8443 -sTCP:LISTEN`
+kill -9 `sudo lsof -ntP -iTCP:8444 -sTCP:LISTEN`
 
 cd "$ROOT"
 
 # Lanuch cloud simulation script
 python3 ./cloud.py \
+  --transport "$HTTP_MODE" \
   --weights "$MODEL" \
   --prompt "$PROMPT" \
   --max_new_tokens "$MAX_NEW_TOKENS" \
@@ -48,7 +52,8 @@ find "$IMAGE_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png"
 
   # Lanuch edge simulation script
   python3 ./edge.py \
-    --weights "$MODEL" \
+    --transport "$HTTP_MODE" \
+	--weights "$MODEL" \
     --image "$IMAGE" \
   	--generations "$GENERATIONS" \
     | tee "$EDGE_LOG" 2>&1

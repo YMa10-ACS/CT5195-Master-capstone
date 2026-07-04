@@ -12,6 +12,7 @@ sys.path.insert(0, PROJECT_ROOT)
 
 from vlm import load_model, combined_image_and_text_message, construct_prompt, generate
 
+import ssl
 
 def time_using(func):
     @wraps(func)
@@ -40,8 +41,8 @@ def parse_args():
                         help="Maximum number of tokens per output")
     parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--http-port", type=int, default=8000)
-    parser.add_argument("--https-port", type=int, default=8080)
+    parser.add_argument("--transport", choices=["http", "https-aes-gcm", "https-chacha20"], default="http",
+                        help="Transport protocol used to send visual embeddings")
     args = parser.parse_args()
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -105,10 +106,8 @@ def receive_embedding():
                     greedy=True,
                     temperature=1.0
                 )
-
-
-
     return jsonify({"result": text_list})
+
 
 if __name__ == "__main__":
     app_name = os.path.basename(__file__)
@@ -122,4 +121,24 @@ if __name__ == "__main__":
     app.config["max_new_tokens"] = args.max_new_tokens
     app.config["device"] = args.device
 
-    app.run(host=args.host, port=args.port)
+    if args.transport == "http" :
+        app.run(host=args.host, port=8000)
+        exit
+
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+
+    # SSL context for HTTPS
+    print(f"Starting HTTPS server on {args.host}:{args.transport}...")
+    cert_path = os.path.join(PROJECT_ROOT, "cert", "cert.pem")
+    key_path = os.path.join(PROJECT_ROOT, "cert", "key.pem")
+    print(f"cert file: {cert_path}\n key file: {key_path}")
+
+    context.load_cert_chain(cert_path, key_path)
+    if args.transport == "https-aes-gcm":
+        context.set_ciphers("ECDHE-RSA-AES128-GCM-SHA256")
+        app.run(host=args.host, port=8443, ssl_context=context)
+    elif args.transport == "https-chacha20":
+        context.set_ciphers("ECDHE-RSA-CHACHA20-POLY1305")
+        app.run(host=args.host, port=8444, ssl_context=context)
+
+    exit

@@ -153,7 +153,7 @@ def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_rati
             target_url,
             data=payload,
             headers={"Visual-Meta": json.dumps(metadata)},
-            verify=ca_cert
+            verify=False
         )
 
     print("status code:", response.status_code)
