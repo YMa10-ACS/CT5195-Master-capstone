@@ -3,6 +3,7 @@ import sys, os, json, time
 import numpy as np
 import torch
 import argparse
+import psutil
 from functools import wraps
 from flask import Flask, request, jsonify
 from vlm import init_tokenizer
@@ -72,10 +73,16 @@ def reconstruct_from_request(device):
     projected = torch.tensor(data, device=device).reshape(1, -1, shape[-1])
     return projected, splitted_image_ratio, generations
 
+def cpu_times():
+    times = psutil.Process(os.getpid()).cpu_times()
+    return times.user + times.system
+
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
 def receive_embedding():
+    request_start = time.perf_counter()
+    cpu_start = cpu_times()
     torch.manual_seed(0)
     device = app.config["device"]
     prompt = app.config["prompt"]
@@ -106,7 +113,14 @@ def receive_embedding():
                     greedy=True,
                     temperature=1.0
                 )
-    return jsonify({"result": text_list})
+    request_end = time.perf_counter()
+    cpu_end = cpu_times()
+
+    metrics = {
+        "cloud_total_request_s": request_end - request_start,
+        "cloud_cpu_total_s_delta": cpu_end - cpu_start,
+    }
+    return jsonify({"result": text_list, "metrics": metrics})
 
 
 if __name__ == "__main__":

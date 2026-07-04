@@ -12,9 +12,10 @@ PROMPT="What is this?"
 MAX_NEW_TOKENS=300
 GENERATIONS=1
 MAX_IMAGES=20
-HTTP_MODE="https-aes-gcm"
+HTTP_MODE="${1:-https-aes-gcm}"
 
 CLOUD_LOG="/tmp/distributed_vlm_cloud.log"
+METRICS_CSV="/tmp/distributed_vlm_metrics_${HTTP_MODE}.csv"
 
 # Kill the cloud service before testing.
 kill -9 `sudo lsof -ntP -iTCP:8000 -sTCP:LISTEN`
@@ -29,7 +30,7 @@ python3 ./cloud.py \
   --weights "$MODEL" \
   --prompt "$PROMPT" \
   --max_new_tokens "$MAX_NEW_TOKENS" \
-  | tee "$CLOUD_LOG" 2>&1 &
+  2>&1 | tee "$CLOUD_LOG" &
 
 CLOUD_PID=$!
 
@@ -38,32 +39,20 @@ sleep 5
 
 rm -f "$VALIDATION_LOG"
 
-COUNT=0
-find "$IMAGE_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | while read IMAGE; do
-  COUNT=$((COUNT + 1))
-  if [ "$COUNT" -ge "$MAX_IMAGES" ]; then
-    break
-  fi
-  
-  NAME="$(basename "$IMAGE")"
-  EDGE_LOG="/tmp/distributed_vlm_edge_${NAME}.log"
+EDGE_LOG="/tmp/distributed_vlm_edge_${HTTP_MODE}.log"
 
-  echo "===== Image: $NAME ====="
+# Lanuch edge simulation script in batch mode. The model is loaded once, then
+# each image is processed sequentially.
+python3 ./edge.py \
+  --transport "$HTTP_MODE" \
+  --weights "$MODEL" \
+  --image_dir "$IMAGE_DIR" \
+  --max_images "$MAX_IMAGES" \
+  --generations "$GENERATIONS" \
+  --metrics_csv "$METRICS_CSV" \
+  | tee "$EDGE_LOG" 2>&1
 
-  # Lanuch edge simulation script
-  python3 ./edge.py \
-    --transport "$HTTP_MODE" \
-	--weights "$MODEL" \
-    --image "$IMAGE" \
-  	--generations "$GENERATIONS" \
-    | tee "$EDGE_LOG" 2>&1
-  echo
-
-  cat $EDGE_LOG | grep "Generation"
-  cat $EDGE_LOG | grep "matched_pair"
-
-  MATCH_RECORDS=$(grep "matched pair" "$EDGE_LOG")
-done
+MATCH_RECORDS=$(grep "matched pair" "$EDGE_LOG")
 
 kill "$CLOUD_PID"
 
@@ -73,12 +62,13 @@ MATCHED_PAIR=0
 COMPARED_PAIRS=0
 
 while read -r line; do
-  matched=$(echo "$line" | sed -E 's/.*unmatch pair.* ([0-9]+)\/([0-9]+).*/\1/')
-  compared=$(echo "$line" | sed -E 's/.*matched pair: ([0-9]+)\/([0-9]+).*/\2/')
+  unmatched=$(echo "$line" | sed -E 's/.*unmatch pair \/ matched pair = ([0-9]+)\/([0-9]+).*/\1/')
+  matched=$(echo "$line" | sed -E 's/.*unmatch pair \/ matched pair = ([0-9]+)\/([0-9]+).*/\2/')
+  compared=$((unmatched + matched))
 
   MATCHED_PAIR=$((MATCHED_PAIR + matched))
   COMPARED_PAIRS=$((COMPARED_PAIRS + compared))
-done < (echo "$MATCH_RECORDS")
+done < <(echo "$MATCH_RECORDS")
 
 echo "total matched: $MATCHED_PAIR"
 echo "total compared: $COMPARED_PAIRS"

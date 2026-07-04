@@ -11,9 +11,12 @@ import requests
 
 from PIL import Image
 import argparse
+import csv
 import json
+import psutil
 
 import time
+from datetime import datetime, timezone
 from functools import wraps
 
 import sys
@@ -34,8 +37,12 @@ def parse_args():
         "--hf_model", type=str, default="lusxvr/nanoVLM-230M-8k",
         help="HuggingFace repo ID to download from incase --checkpoint isnt set."
     )
-    parser.add_argument("--image", type=str, default="assets/image.png",
+    parser.add_argument("--image", type=str, default=None,
                         help="Path to input image")
+    parser.add_argument("--image_dir", type=str, default=None,
+                        help="Directory of input images for batch mode")
+    parser.add_argument("--max_images", type=int, default=None,
+                        help="Maximum number of images to process in batch mode")
     parser.add_argument("--prompt", type=str, default="What is this?",
                         help="Text prompt to feed the model")
     parser.add_argument("--generations", type=int, default=5,
@@ -47,13 +54,70 @@ def parse_args():
                         help="Transport protocol used to send visual embeddings")
     parser.add_argument("--ca_cert", default=f"{PROJECT_ROOT}/cert/cert.pem", type=str, 
                         help="Path to CA certificate for HTTPS requests")
+    parser.add_argument("--metrics_csv", default=None, type=str,
+                        help="Optional CSV file to append per-request metrics")
 
     args = parser.parse_args()
+    if not args.image and not args.image_dir:
+        parser.error("Either --image or --image_dir must be provided")
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     args.device = device
 
     return args
+
+METRICS_COLUMNS = [
+    "timestamp",
+    "image",
+    "transport",
+    "payload_bytes",
+    "split_latency_s",
+    "local_baseline_latency_s",
+    "cloud_total_request_s",
+    "edge_cpu_total_s_delta",
+    "cloud_cpu_total_s_delta",
+]
+
+def cpu_times():
+    times = psutil.Process(os.getpid()).cpu_times()
+    return times.user + times.system
+
+def write_metrics_csv(path, row):
+    if not path:
+        return
+    parent_dir = os.path.dirname(path)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+    file_exists = os.path.exists(path)
+    with open(path, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=METRICS_COLUMNS)
+        if not file_exists or os.path.getsize(path) == 0:
+            writer.writeheader()
+        writer.writerow({column: row.get(column, "") for column in METRICS_COLUMNS})
+
+def target_url_for_transport(transport_protocol):
+    if transport_protocol == "http":
+        return "http://127.0.0.1:8000"
+    if transport_protocol == "https-aes-gcm":
+        return "https://127.0.0.1:8443"
+    if transport_protocol == "https-chacha20":
+        return "https://127.0.0.1:8444"
+    raise ValueError(f"Unsupported transport protocol: {transport_protocol}")
+
+def collect_images(image_dir, max_images):
+    image_paths = []
+    for file_name in sorted(os.listdir(image_dir)):
+        if file_name.lower().endswith(".jpg"):
+            image_paths.append(os.path.join(image_dir, file_name))
+            if max_images is not None and len(image_paths) >= max_images:
+                break
+
+    return image_paths
+
+def get_single_image_path(image_dir, image):
+    if image_dir:
+        return os.path.join(image_dir, image)
+    return image
 
 def time_using(func):
     @wraps(func)
@@ -89,7 +153,6 @@ def image_preprocessing(image, model, image_processor):
         processed_image = processed_image[1:]
     return processed_image, splitted_image_ratio
 
-@time_using
 def generate_embedding(processed_image, model, device):
     img_t = processed_image.to(device)
     print("img_t type:", type(img_t))
@@ -103,11 +166,9 @@ def generate_embedding(processed_image, model, device):
     with torch.no_grad():
         # Convert image to vision embedding.
         vision_out = model.vision_encoder(img_t)
-        end_vision = time.perf_counter()
 
         # Convert visual features from the vision encoder and map them into same embedding space.
         projected = model.MP(vision_out)
-        end_projected = time.perf_counter()
 
     print("vision_out type:", type(vision_out))
     print("vision_out shape:", vision_out.shape)
@@ -119,10 +180,9 @@ def generate_embedding(processed_image, model, device):
     print("projected shape:", projected.shape)
     print("projected dtype:", projected.dtype)
     print("projected device:", projected.device)
-    
+
     return projected
 
-@time_using
 def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_ratio, prompt, generations):
     # 5) Transfer embedding
     data = projected.detach().cpu().numpy()
@@ -138,17 +198,16 @@ def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_rati
     }
 
     payload = data.tobytes()
+
+    target_url = target_url_for_transport(transport_protocol)
+    print(f"target_url: {target_url}")
     if transport_protocol == "http":
         response = requests.post(
-            "http://127.0.0.1:8000", 
+            target_url,
             data=payload,
             headers={"Visual-Meta": json.dumps(metadata)}
         )
-    elif transport_protocol == "https-aes-gcm" or transport_protocol == "https-chacha20":
-        if transport_protocol == "https-aes-gcm":
-            target_url = "https://127.0.0.1:8443"
-        elif transport_protocol == "https-chacha20":
-            target_url = "https://127.0.0.1:8444"
+    else:
         response = requests.post(
             target_url,
             data=payload,
@@ -161,8 +220,12 @@ def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_rati
     result_list = result_json["result"]
     for i, text in enumerate(result_list, start=1):
         print(f"  >> Generation {i}: {text}")
-    
-    return result_list
+
+    metrics = {
+        "payload_bytes": len(payload),
+    }
+    metrics.update(result_json.get("metrics", {}))
+    return result_list, metrics
 
 def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokonizer, generations, max_new_tokens) :
     
@@ -194,22 +257,33 @@ def generate_text_by_embedding(model, device, projected, splitted_image_ratio, p
             )
     return text_list
 
-def main():
-    app_name = os.path.basename(__file__)
-    print(f"{app_name} startup...")
-    args = parse_args()
-
-    model = load_model(args.weights, args.device)
-    image_processor = init_image_processor(model)
-    text_tokonizer = init_tokenizer(model)
-
+def process_image(args, image_path, model, image_processor, text_tokonizer):
     result_list = []
     nanovlm_list = []
-    
-    processed_image, splitted_image_ratio = image_preprocessing(args.image, model, image_processor)
+    metrics = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "image": image_path,
+        "transport": args.transport,
+    }
+    edge_cpu_start = cpu_times()
+
+    split_start = time.perf_counter()
+    processed_image, splitted_image_ratio = image_preprocessing(image_path, model, image_processor)
+
+    embedding_start = time.perf_counter()
     projected = generate_embedding(processed_image, model, args.device)
-    result_list = transfer_embdding(args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
+    embedding_end = time.perf_counter()
+    print(f"[timeing] generate_embedding: {embedding_end - embedding_start} seconds")
+
+    result_list, transfer_metrics = transfer_embdding(args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
+    split_end = time.perf_counter()
+    metrics["split_latency_s"] = split_end - split_start
+    metrics.update(transfer_metrics)
+
+    local_generate_start = time.perf_counter()
     nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
+    local_generate_end = time.perf_counter()
+    metrics["local_baseline_latency_s"] = local_generate_end - local_generate_start
 
 
     unmatched_pair = 0
@@ -224,6 +298,28 @@ def main():
 
     print(f"unmatch pair / matched pair = {unmatched_pair}/{matched_pair}")
 
+    edge_cpu_end = cpu_times()
+    metrics["edge_cpu_total_s_delta"] = edge_cpu_end - edge_cpu_start
+    write_metrics_csv(args.metrics_csv, metrics)
+
+def main():
+    app_name = os.path.basename(__file__)
+    print(f"{app_name} startup...")
+    args = parse_args()
+
+    model = load_model(args.weights, args.device)
+    image_processor = init_image_processor(model)
+    text_tokonizer = init_tokenizer(model)
+
+    if args.image:
+        images = [get_single_image_path(args.image_dir, args.image)]
+    else:
+        images = collect_images(args.image_dir, args.max_images)
+        print(f"collect {len(images)} images from {args.image_dir}")
+
+    for index, image_path in enumerate(images, start=1):
+        print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")
+        process_image(args, image_path, model, image_processor, text_tokonizer)
 
 if __name__ == "__main__":
     main()
