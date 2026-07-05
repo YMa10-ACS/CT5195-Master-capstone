@@ -14,6 +14,7 @@ csv_files <- c(
 latency_columns <- c(
   split_latency_s = "Split total",
   transfer_latency_s = "Transfer",
+  network_overhead_s = "Network/protocol overhead",
   cloud_total_request_s = "Cloud request",
   local_baseline_latency_s = "Local baseline"
 )
