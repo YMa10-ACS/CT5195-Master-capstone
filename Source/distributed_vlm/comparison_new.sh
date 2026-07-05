@@ -14,8 +14,11 @@ GENERATIONS=1
 MAX_IMAGES=20
 HTTP_MODE="${1:-https-aes-gcm}"
 
-CLOUD_LOG="/tmp/distributed_vlm_cloud.log"
-METRICS_CSV="/tmp/distributed_vlm_metrics_${HTTP_MODE}.csv"
+mkdir -p "$ROOT/record"
+
+CLOUD_LOG="record/distributed_vlm_cloud_${HTTP_MODE}.log"
+EDGE_LOG="record/distributed_vlm_edge_${HTTP_MODE}.log"
+METRICS_CSV="record/distributed_vlm_metrics_${HTTP_MODE}.csv"
 
 # Kill the cloud service before testing.
 kill -9 `sudo lsof -ntP -iTCP:8000 -sTCP:LISTEN`
@@ -38,8 +41,6 @@ CLOUD_PID=$!
 sleep 5
 
 rm -f "$VALIDATION_LOG"
-
-EDGE_LOG="/tmp/distributed_vlm_edge_${HTTP_MODE}.log"
 
 # Lanuch edge simulation script in batch mode. The model is loaded once, then
 # each image is processed sequentially.

@@ -72,6 +72,7 @@ METRICS_COLUMNS = [
     "transport",
     "payload_bytes",
     "split_latency_s",
+    "transfer_latency_s",
     "local_baseline_latency_s",
     "cloud_total_request_s",
     "edge_cpu_total_s_delta",
@@ -201,6 +202,7 @@ def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_rati
 
     target_url = target_url_for_transport(transport_protocol)
     print(f"target_url: {target_url}")
+    transfer_start = time.perf_counter()
     if transport_protocol == "http":
         response = requests.post(
             target_url,
@@ -214,6 +216,7 @@ def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_rati
             headers={"Visual-Meta": json.dumps(metadata)},
             verify=False
         )
+    transfer_end = time.perf_counter()
 
     print("status code:", response.status_code)
     result_json = response.json()
@@ -223,6 +226,7 @@ def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_rati
 
     metrics = {
         "payload_bytes": len(payload),
+        "transfer_latency_s": transfer_end - transfer_start,
     }
     metrics.update(result_json.get("metrics", {}))
     return result_list, metrics
