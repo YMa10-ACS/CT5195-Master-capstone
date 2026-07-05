@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument("--max_new_tokens", type=int, default=300,
                         help="Maximum number of tokens per output")
     parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
-    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")
     parser.add_argument("--transport", choices=["http", "https-aes-gcm", "https-chacha20"], default="http",
                         help="Transport protocol used to send visual embeddings")
     args = parser.parse_args()

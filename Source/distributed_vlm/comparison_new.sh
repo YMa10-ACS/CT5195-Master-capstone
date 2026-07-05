@@ -13,6 +13,8 @@ MAX_NEW_TOKENS=300
 GENERATIONS=1
 MAX_IMAGES=20
 HTTP_MODE="${1:-https-aes-gcm}"
+CLOUD_TARGET="${2:-${CLOUD_TARGET:-127.0.0.1}}"
+CLOUD_HOST="${CLOUD_HOST:-0.0.0.0}"
 
 mkdir -p "$ROOT/record"
 
@@ -30,6 +32,7 @@ cd "$ROOT"
 # Lanuch cloud simulation script
 python3 ./cloud.py \
   --transport "$HTTP_MODE" \
+  --host "$CLOUD_HOST" \
   --weights "$MODEL" \
   --prompt "$PROMPT" \
   --max_new_tokens "$MAX_NEW_TOKENS" \
@@ -46,6 +49,7 @@ rm -f "$VALIDATION_LOG"
 # each image is processed sequentially.
 python3 ./edge.py \
   --transport "$HTTP_MODE" \
+  --target "$CLOUD_TARGET" \
   --weights "$MODEL" \
   --image_dir "$IMAGE_DIR" \
   --max_images "$MAX_IMAGES" \

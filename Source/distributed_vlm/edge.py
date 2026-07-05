@@ -39,6 +39,8 @@ def parse_args():
     )
     parser.add_argument("--image", type=str, default=None,
                         help="Path to input image")
+    parser.add_argument("--target", type=str, default="127.0.0.1",
+                        help="Target IP for the request")
     parser.add_argument("--image_dir", type=str, default=None,
                         help="Directory of input images for batch mode")
     parser.add_argument("--max_images", type=int, default=None,
@@ -100,13 +102,13 @@ def write_metrics_csv(path, row):
             writer.writeheader()
         writer.writerow({column: row.get(column, "") for column in METRICS_COLUMNS})
 
-def target_url_for_transport(transport_protocol):
+def target_url_for_transport(target, transport_protocol):
     if transport_protocol == "http":
-        return "http://127.0.0.1:8000"
+        return f"http://{target}:8000"
     if transport_protocol == "https-aes-gcm":
-        return "https://127.0.0.1:8443"
+        return f"https://{target}:8443"
     if transport_protocol == "https-chacha20":
-        return "https://127.0.0.1:8444"
+        return f"https://{target}:8444"
     raise ValueError(f"Unsupported transport protocol: {transport_protocol}")
 
 def collect_images(image_dir, max_images):
@@ -188,7 +190,7 @@ def generate_embedding(processed_image, model, device):
 
     return projected
 
-def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_ratio, prompt, generations):
+def transfer_embdding(target, transport_protocol, ca_cert,projected, splitted_image_ratio, prompt, generations):
     transfer_cpu_start = cpu_times()
 
     # 5) Transfer embedding
@@ -206,7 +208,7 @@ def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_rati
 
     payload = data.tobytes()
 
-    target_url = target_url_for_transport(transport_protocol)
+    target_url = target_url_for_transport(target, transport_protocol)
     print(f"target_url: {target_url}")
     transfer_start = time.perf_counter()
     if transport_protocol == "http":
@@ -291,7 +293,7 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     print(f"[timeing] generate_embedding: {embedding_end - embedding_start} seconds")
     metrics["edge_embedding_cpu_total_s"] = embedding_cpu_end - embedding_cpu_start
 
-    result_list, transfer_metrics = transfer_embdding(args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
+    result_list, transfer_metrics = transfer_embdding(args.target, args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
     split_end = time.perf_counter()
     metrics["split_latency_s"] = split_end - split_start
     metrics.update(transfer_metrics)
