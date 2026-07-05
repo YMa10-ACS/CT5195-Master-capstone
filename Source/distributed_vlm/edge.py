@@ -73,10 +73,14 @@ METRICS_COLUMNS = [
     "payload_bytes",
     "split_latency_s",
     "transfer_latency_s",
+    "network_overhead_s",
     "local_baseline_latency_s",
     "cloud_total_request_s",
-    "edge_cpu_total_s_delta",
-    "cloud_cpu_total_s_delta",
+    "edge_embedding_cpu_total_s",
+    "edge_transfer_cpu_total_s",
+    "local_baseline_cpu_total_s",
+    "edge_cpu_total_s",
+    "cloud_cpu_total_s",
 ]
 
 def cpu_times():
@@ -185,6 +189,8 @@ def generate_embedding(processed_image, model, device):
     return projected
 
 def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_ratio, prompt, generations):
+    transfer_cpu_start = cpu_times()
+
     # 5) Transfer embedding
     data = projected.detach().cpu().numpy()
     print("data type:", type(data))
@@ -229,6 +235,9 @@ def transfer_embdding(transport_protocol, ca_cert,projected, splitted_image_rati
         "transfer_latency_s": transfer_end - transfer_start,
     }
     metrics.update(result_json.get("metrics", {}))
+    metrics["network_overhead_s"] = metrics["transfer_latency_s"] - metrics["cloud_total_request_s"]
+    transfer_cpu_end = cpu_times()
+    metrics["edge_transfer_cpu_total_s"] = transfer_cpu_end - transfer_cpu_start
     return result_list, metrics
 
 def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokonizer, generations, max_new_tokens) :
@@ -272,12 +281,15 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     edge_cpu_start = cpu_times()
 
     split_start = time.perf_counter()
+    embedding_cpu_start = cpu_times()
     processed_image, splitted_image_ratio = image_preprocessing(image_path, model, image_processor)
 
     embedding_start = time.perf_counter()
     projected = generate_embedding(processed_image, model, args.device)
     embedding_end = time.perf_counter()
+    embedding_cpu_end = cpu_times()
     print(f"[timeing] generate_embedding: {embedding_end - embedding_start} seconds")
+    metrics["edge_embedding_cpu_total_s"] = embedding_cpu_end - embedding_cpu_start
 
     result_list, transfer_metrics = transfer_embdding(args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
     split_end = time.perf_counter()
@@ -285,9 +297,12 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     metrics.update(transfer_metrics)
 
     local_generate_start = time.perf_counter()
+    local_generate_cpu_start = cpu_times()
     nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
+    local_generate_cpu_end = cpu_times()
     local_generate_end = time.perf_counter()
     metrics["local_baseline_latency_s"] = local_generate_end - local_generate_start
+    metrics["local_baseline_cpu_total_s"] = local_generate_cpu_end - local_generate_cpu_start
 
 
     unmatched_pair = 0
@@ -303,7 +318,7 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     print(f"unmatch pair / matched pair = {unmatched_pair}/{matched_pair}")
 
     edge_cpu_end = cpu_times()
-    metrics["edge_cpu_total_s_delta"] = edge_cpu_end - edge_cpu_start
+    metrics["edge_cpu_total_s"] = edge_cpu_end - edge_cpu_start
     write_metrics_csv(args.metrics_csv, metrics)
 
 def main():
