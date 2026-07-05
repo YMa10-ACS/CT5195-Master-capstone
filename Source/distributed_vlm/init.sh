@@ -12,3 +12,8 @@ pip install torchvision
 pip install einops
 pip install requests
 
+if [ ! -d "../nanoVLM" ]; then
+	git clone https://github.com/huggingface/nanoVLM.git
+	mv nanoVLM ../
+fi
+
