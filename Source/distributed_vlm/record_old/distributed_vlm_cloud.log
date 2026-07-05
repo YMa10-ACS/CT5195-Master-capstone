@@ -1,0 +1,10 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+cloud.py startup...
+ * Serving Flask app 'cloud'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:8000
+Press CTRL+C to quit
+127.0.0.1 - - [05/Jul/2026 10:52:06] "POST / HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 10:52:38] "POST / HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 10:53:38] "POST / HTTP/1.1" 200 -
