@@ -116,7 +116,6 @@ def start_cpu_sampler(interval=0.5):
 
 def end_cpu_sampler(sampler, rss_before_mb):
     sampler.stop()
-    sampler.join()
     cpu_total = sampler.cpu_total
     rss_after_mb = sampler.rss_max_mb
     rss_peak_mb = max(rss_before_mb, rss_after_mb)
@@ -403,7 +402,7 @@ def main():
     batch_end = time.perf_counter()
 
     batch_total = batch_end - batch_start
-    throughput_images_per_min = len(images) / batch_total * 60 if batch_total > 0 else 0
+    throughput_images_per_min = len(images) / batch_total * 60
     print(f"throughput images: {len(images)}")
     print(f"throughput total seconds: {batch_total}")
     print(f"throughput images per minute: {throughput_images_per_min}")
