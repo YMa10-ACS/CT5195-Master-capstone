@@ -5,7 +5,7 @@ IMAGE_DIR="${IMAGE_DIR:-$ROOT/../datasets/ai2d/}"
 MODEL="${MODEL:-lusxvr/nanoVLM-230M-8k}"
 PROMPT="${PROMPT:-What is this?}"
 GENERATIONS="${GENERATIONS:-1}"
-MAX_IMAGES="${MAX_IMAGES:-20}"
+MAX_IMAGES="${MAX_IMAGES:-100}"
 HTTP_MODE="${1:-${HTTP_MODE:-https-aes-gcm}}"
 CLOUD_TARGET="${2:-${CLOUD_TARGET:-127.0.0.1}}"
 

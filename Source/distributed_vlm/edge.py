@@ -346,9 +346,17 @@ def main():
         images = collect_images(args.image_dir, args.max_images)
         print(f"collect {len(images)} images from {args.image_dir}")
 
+    batch_start = time.perf_counter()
     for index, image_path in enumerate(images, start=1):
         print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")
         process_image(args, image_path, model, image_processor, text_tokonizer)
+    batch_end = time.perf_counter()
+
+    batch_total_s = batch_end - batch_start
+    throughput_images_per_min = len(images) / batch_total_s * 60 if batch_total_s > 0 else 0
+    print(f"throughput images: {len(images)}")
+    print(f"throughput total seconds: {batch_total_s}")
+    print(f"throughput images per minute: {throughput_images_per_min}")
 
 if __name__ == "__main__":
     main()
