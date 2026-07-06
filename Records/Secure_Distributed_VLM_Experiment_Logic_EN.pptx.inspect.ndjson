@@ -1,0 +1,185 @@
+{"kind":"deck","id":"pr/0wu9w9","name":"Deck"}
+{"kind":"layout","layoutId":"18cd39a6-915a-4eba-b241-7ecf337879cf","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"10ba569e-231b-4a46-b054-0dbd806608ae","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/aouwa3","slide":1,"title":"Secure Distributed VLM Inference","textShapes":7}
+{"kind":"textbox","id":"sh/adsji5sn","slide":1,"text":"Secure Distributed VLM Inference","textPreview":"Secure Distributed VLM Inference","textChars":32,"textLines":1,"bbox":[42,54,1090,78]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":1,"text":"Experiment logic and interim findings","textPreview":"Experiment logic and interim findings","textChars":37,"textLines":1,"bbox":[42,138,760,48]}
+{"kind":"shape","id":"sh/sji5snel","slide":1,"bbox":[42,230,1196,1.4]}
+{"kind":"textbox","id":"sh/3m94fu18","slide":1,"text":"Goal: evaluate whether visual embedding transmission, encrypted channels, and Intel TDX can protect a split VLM workflow without making inference impractical.","textPreview":"Goal: evaluate whether visual embedding transmission, encrypted channels, and Intel TDX can protect a split VLM workflow without making i...","textChars":158,"textLines":1,"bbox":[42,282,770,128]}
+{"kind":"shape","id":"sh/a5gbq1or","slide":1,"bbox":[888,282,350,156]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":1,"text":"edge","textPreview":"edge","textChars":4,"textLines":1,"bbox":[918,318,110,48]}
+{"kind":"shape","id":"sh/s72x4nap","slide":1,"bbox":[1030,330,66,28]}
+{"kind":"textbox","id":"sh/zidonyd0","slide":1,"text":"cloud","textPreview":"cloud","textChars":5,"textLines":1,"bbox":[1110,318,110,48]}
+{"kind":"textbox","id":"sh/a1gvy90j","slide":1,"text":"nanoVLM | split inference | HTTPS | Intel TDX","textPreview":"nanoVLM | split inference | HTTPS | Intel TDX","textChars":45,"textLines":1,"bbox":[42,620,760,32]}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":1,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"notes","id":"nt/aouwa3","slide":1,"text":""}
+{"kind":"slide","id":"sl/n4jks0","slide":2,"title":"CT5195 MASTER CAPSTONE","textShapes":11}
+{"kind":"textbox","id":"sh/4zidonyd","slide":2,"text":"CT5195 MASTER CAPSTONE","textPreview":"CT5195 MASTER CAPSTONE","textChars":22,"textLines":1,"bbox":[42,38,460,24]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":2,"text":"The question shifts from running the model to measuring security cost","textPreview":"The question shifts from running the model to measuring security cost","textChars":69,"textLines":1,"bbox":[42,72,1080,60]}
+{"kind":"shape","id":"sh/mtwra5gb","slide":2,"bbox":[42,142,1196,1.4]}
+{"kind":"textbox","id":"sh/xc3ylc7u","slide":2,"text":"Uploading raw images exposes sensitive visual content. Sending visual embeddings reduces direct image exposure, but embeddings can still leak information. The experiment therefore measures the performance cost of adding transport security and a trusted cloud runtime.","textPreview":"Uploading raw images exposes sensitive visual content. Sending visual embeddings reduces direct image exposure, but embeddings can still ...","textChars":267,"textLines":1,"bbox":[42,178,720,140]}
+{"kind":"shape","id":"sh/4r65wjud","slide":2,"bbox":[42,360,354,160]}
+{"kind":"textbox","id":"sh/f6dcbulw","slide":2,"text":"Privacy motive","textPreview":"Privacy motive","textChars":14,"textLines":1,"bbox":[60,378,318,34]}
+{"kind":"textbox","id":"sh/mlkjm1cf","slide":2,"text":"Keep the raw image at the edge and send an intermediate representation instead.","textPreview":"Keep the raw image at the edge and send an intermediate representation instead.","textChars":79,"textLines":1,"bbox":[60,422,318,84]}
+{"kind":"shape","id":"sh/x0nuxc3y","slide":2,"bbox":[426,360,354,160]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":2,"text":"Security additions","textPreview":"Security additions","textChars":18,"textLines":1,"bbox":[444,378,318,34]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":2,"text":"Protect embedding transport with HTTPS and protect cloud execution with TDX.","textPreview":"Protect embedding transport with HTTPS and protect cloud execution with TDX.","textChars":76,"textLines":1,"bbox":[444,422,318,84]}
+{"kind":"shape","id":"sh/vy90je9c","slide":2,"bbox":[810,360,354,160]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":2,"text":"Experimental focus","textPreview":"Experimental focus","textChars":18,"textLines":1,"bbox":[828,378,318,34]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":2,"text":"Compare local, split, encrypted split, and TDX split inference on latency and CPU cost.","textPreview":"Compare local, split, encrypted split, and TDX split inference on latency and CPU cost.","textChars":87,"textLines":1,"bbox":[828,422,318,84]}
+{"kind":"textbox","id":"sh/61032lsz","slide":2,"text":"Central question: does stronger protection break the practical latency budget for VLM inference?","textPreview":"Central question: does stronger protection break the practical latency budget for VLM inference?","textChars":96,"textLines":1,"bbox":[42,592,1110,38]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"notes","id":"nt/n4jks0","slide":2,"text":""}
+{"kind":"slide","id":"sl/tlsjs6","slide":3,"title":"CT5195 MASTER CAPSTONE","textShapes":15}
+{"kind":"textbox","id":"sh/ixczed8v","slide":3,"text":"CT5195 MASTER CAPSTONE","textPreview":"CT5195 MASTER CAPSTONE","textChars":22,"textLines":1,"bbox":[42,38,460,24]}
+{"kind":"textbox","id":"sh/tovahoza","slide":3,"text":"The system splits nanoVLM between edge vision encoding and cloud decoding","textPreview":"The system splits nanoVLM between edge vision encoding and cloud decoding","textChars":73,"textLines":1,"bbox":[42,72,1080,60]}
+{"kind":"shape","id":"sh/032lszqt","slide":3,"bbox":[42,142,1196,1.4]}
+{"kind":"shape","id":"sh/bulwval8","slide":3,"bbox":[42,238,180,190]}
+{"kind":"textbox","id":"sh/i9s36hcr","slide":3,"text":"Image input","textPreview":"Image input","textChars":11,"textLines":1,"bbox":[60,262,144,32]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":3,"text":"AI2D image\nresize / split","textPreview":"AI2D image | resize / split","textChars":25,"textLines":2,"bbox":[60,316,144,72]}
+{"kind":"shape","id":"sh/0fepkzup","slide":3,"bbox":[230,316,28,28]}
+{"kind":"shape","id":"sh/byhgn29g","slide":3,"bbox":[262,238,180,190]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":3,"text":"Edge","textPreview":"Edge","textChars":4,"textLines":1,"bbox":[280,262,144,32]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":3,"text":"vision encoder\nprojection module","textPreview":"vision encoder | projection module","textChars":32,"textLines":2,"bbox":[280,316,144,72]}
+{"kind":"shape","id":"sh/1orytsvu","slide":3,"bbox":[450,316,28,28]}
+{"kind":"shape","id":"sh/u18jqh0f","slide":3,"bbox":[482,238,180,190]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":3,"text":"Transport","textPreview":"Transport","textChars":9,"textLines":1,"bbox":[500,262,144,32]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":3,"text":"embedding bytes\nmetadata header","textPreview":"embedding bytes | metadata header","textChars":31,"textLines":2,"bbox":[500,316,144,72]}
+{"kind":"shape","id":"sh/1032lszq","slide":3,"bbox":[670,316,28,28]}
+{"kind":"shape","id":"sh/u9knih4b","slide":3,"bbox":[702,238,180,190]}
+{"kind":"textbox","id":"sh/judg7ads","slide":3,"text":"Cloud","textPreview":"Cloud","textChars":5,"textLines":1,"bbox":[720,262,144,32]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":3,"text":"rebuild tensor\nprompt tokens","textPreview":"rebuild tensor | prompt tokens","textChars":28,"textLines":2,"bbox":[720,316,144,72]}
+{"kind":"shape","id":"sh/54zidony","slide":3,"bbox":[890,316,28,28]}
+{"kind":"shape","id":"sh/9s36hcrm","slide":3,"bbox":[922,238,180,190]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":3,"text":"Output","textPreview":"Output","textChars":6,"textLines":1,"bbox":[940,262,144,32]}
+{"kind":"textbox","id":"sh/rmhk3q5o","slide":3,"text":"LLM decoder\ngenerated text","textPreview":"LLM decoder | generated text","textChars":26,"textLines":2,"bbox":[940,316,144,72]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":3,"text":"Implementation basis: edge.py performs image preprocessing, visual embedding generation, and request sending. cloud.py receives bytes, reconstructs the tensor, combines it with prompt tokens, and runs the decoder.","textPreview":"Implementation basis: edge.py performs image preprocessing, visual embedding generation, and request sending. cloud.py receives bytes, re...","textChars":213,"textLines":1,"bbox":[42,500,1060,68]}
+{"kind":"textbox","id":"sh/90je9cvi","slide":3,"text":"The split point is after projection, so the cloud can generate text without receiving the raw image.","textPreview":"The split point is after projection, so the cloud can generate text without receiving the raw image.","textChars":100,"textLines":1,"bbox":[42,594,1030,36]}
+{"kind":"textbox","id":"sh/gfmlkjm1","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"notes","id":"nt/tlsjs6","slide":3,"text":""}
+{"kind":"slide","id":"sl/34mup5","slide":4,"title":"CT5195 MASTER CAPSTONE","textShapes":24}
+{"kind":"textbox","id":"sh/gvy90je9","slide":4,"text":"CT5195 MASTER CAPSTONE","textPreview":"CT5195 MASTER CAPSTONE","textChars":22,"textLines":1,"bbox":[42,38,460,24]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":4,"text":"The experiment matrix isolates three comparison dimensions","textPreview":"The experiment matrix isolates three comparison dimensions","textChars":58,"textLines":1,"bbox":[42,72,1080,60]}
+{"kind":"shape","id":"sh/2p8nqxs7","slide":4,"bbox":[42,142,1196,1.4]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":4,"text":"Dimension","textPreview":"Dimension","textChars":9,"textLines":1,"bbox":[42,178,250,30]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":4,"text":"Control","textPreview":"Control","textChars":7,"textLines":1,"bbox":[340,178,250,30]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":4,"text":"Experiment","textPreview":"Experiment","textChars":10,"textLines":1,"bbox":[638,178,250,30]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":4,"text":"Purpose","textPreview":"Purpose","textChars":7,"textLines":1,"bbox":[936,178,250,30]}
+{"kind":"shape","id":"sh/9w3m94fu","slide":4,"bbox":[42,218,1196,1.4]}
+{"kind":"shape","id":"sh/kb6xkf6d","slide":4,"bbox":[42,232,1196,72]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":4,"text":"Inference placement","textPreview":"Inference placement","textChars":19,"textLines":1,"bbox":[42,242,245,56]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":4,"text":"Local baseline","textPreview":"Local baseline","textChars":14,"textLines":1,"bbox":[340,242,245,56]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":4,"text":"Split inference","textPreview":"Split inference","textChars":15,"textLines":1,"bbox":[638,242,245,56]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":4,"text":"Measure the cost of splitting the model","textPreview":"Measure the cost of splitting the model","textChars":39,"textLines":1,"bbox":[936,242,285,56]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":4,"text":"Transport protocol","textPreview":"Transport protocol","textChars":18,"textLines":1,"bbox":[42,334,245,56]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":4,"text":"HTTP","textPreview":"HTTP","textChars":4,"textLines":1,"bbox":[340,334,245,56]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":4,"text":"HTTPS AES-GCM\nHTTPS ChaCha20","textPreview":"HTTPS AES-GCM | HTTPS ChaCha20","textChars":28,"textLines":2,"bbox":[638,334,245,56]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":4,"text":"Measure encryption and authentication overhead","textPreview":"Measure encryption and authentication overhead","textChars":46,"textLines":1,"bbox":[936,334,285,56]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":4,"bbox":[42,416,1196,72]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":4,"text":"Cloud environment","textPreview":"Cloud environment","textChars":17,"textLines":1,"bbox":[42,426,245,56]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":4,"text":"Standard VM","textPreview":"Standard VM","textChars":11,"textLines":1,"bbox":[340,426,245,56]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":4,"text":"Intel TDX VM","textPreview":"Intel TDX VM","textChars":12,"textLines":1,"bbox":[638,426,245,56]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":4,"text":"Measure trusted execution overhead","textPreview":"Measure trusted execution overhead","textChars":34,"textLines":1,"bbox":[936,426,285,56]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":4,"text":"Input batch","textPreview":"Input batch","textChars":11,"textLines":1,"bbox":[42,518,245,56]}
+{"kind":"textbox","id":"sh/judg7ads","slide":4,"text":"AI2D images","textPreview":"AI2D images","textChars":11,"textLines":1,"bbox":[340,518,245,56]}
+{"kind":"textbox","id":"sh/u9knih4b","slide":4,"text":"25 non-TDX images\n20 TDX images","textPreview":"25 non-TDX images | 20 TDX images","textChars":31,"textLines":2,"bbox":[638,518,245,56]}
+{"kind":"textbox","id":"sh/1032lszq","slide":4,"text":"Build repeatable interim metrics","textPreview":"Build repeatable interim metrics","textChars":32,"textLines":1,"bbox":[936,518,285,56]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":4,"text":"The logic is sequential: first test split inference, then protocol choice, then TDX.","textPreview":"The logic is sequential: first test split inference, then protocol choice, then TDX.","textChars":84,"textLines":1,"bbox":[42,632,1060,32]}
+{"kind":"textbox","id":"sh/nyd0z610","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"notes","id":"nt/34mup5","slide":4,"text":""}
+{"kind":"slide","id":"sl/phu6xv","slide":5,"title":"CT5195 MASTER CAPSTONE","textShapes":22}
+{"kind":"textbox","id":"sh/1orytsvu","slide":5,"text":"CT5195 MASTER CAPSTONE","textPreview":"CT5195 MASTER CAPSTONE","textChars":22,"textLines":1,"bbox":[42,38,460,24]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":5,"text":"The metrics separate end-to-end latency into explainable stages","textPreview":"The metrics separate end-to-end latency into explainable stages","textChars":63,"textLines":1,"bbox":[42,72,1080,60]}
+{"kind":"shape","id":"sh/jm1cfa9w","slide":5,"bbox":[42,142,1196,1.4]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":5,"text":"Split total latency","textPreview":"Split total latency","textChars":19,"textLines":1,"bbox":[64,190,330,34]}
+{"kind":"textbox","id":"sh/1032lszq","slide":5,"text":"=","textPreview":"=","textChars":1,"textLines":1,"bbox":[420,190,40,34]}
+{"kind":"shape","id":"sh/u9knih4b","slide":5,"bbox":[470,168,210,150]}
+{"kind":"textbox","id":"sh/judg7ads","slide":5,"text":"Edge compute","textPreview":"Edge compute","textChars":12,"textLines":1,"bbox":[488,186,174,34]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":5,"text":"image preprocessing\nvision encoder\nprojection","textPreview":"image preprocessing | vision encoder | projection","textChars":45,"textLines":3,"bbox":[488,230,174,74]}
+{"kind":"textbox","id":"sh/54zidony","slide":5,"text":"+","textPreview":"+","textChars":1,"textLines":1,"bbox":[702,214,40,34]}
+{"kind":"shape","id":"sh/t47y1kre","slide":5,"bbox":[752,168,230,150]}
+{"kind":"textbox","id":"sh/0je9cvix","slide":5,"text":"Transfer and cloud","textPreview":"Transfer and cloud","textChars":18,"textLines":1,"bbox":[770,186,194,34]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":5,"text":"payload transfer\ncloud request\nnetwork overhead","textPreview":"payload transfer | cloud request | network overhead","textChars":47,"textLines":3,"bbox":[770,230,194,74]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":5,"text":"+","textPreview":"+","textChars":1,"textLines":1,"bbox":[1006,214,40,34]}
+{"kind":"shape","id":"sh/tcj6tova","slide":5,"bbox":[1050,168,188,150]}
+{"kind":"textbox","id":"sh/0rqd4vmt","slide":5,"text":"Resource signals","textPreview":"Resource signals","textChars":16,"textLines":1,"bbox":[1068,186,152,34]}
+{"kind":"textbox","id":"sh/b6xkf6dc","slide":5,"text":"edge CPU\ncloud CPU\npayload bytes","textPreview":"edge CPU | cloud CPU | payload bytes","textChars":32,"textLines":3,"bbox":[1068,230,152,74]}
+{"kind":"textbox","id":"sh/il0rqd4v","slide":5,"text":"Payload","textPreview":"Payload","textChars":7,"textLines":1,"bbox":[64,390,280,26]}
+{"kind":"textbox","id":"sh/tovahoza","slide":5,"text":"≈2.06 MB","textPreview":"≈2.06 MB","textChars":8,"textLines":1,"bbox":[64,420,280,62]}
+{"kind":"textbox","id":"sh/032lszqt","slide":5,"text":"Each image sends projected visual embeddings, not the original JPEG.","textPreview":"Each image sends projected visual embeddings, not the original JPEG.","textChars":68,"textLines":1,"bbox":[64,482,280,54]}
+{"kind":"textbox","id":"sh/czed8v6p","slide":5,"text":"Protocol overhead","textPreview":"Protocol overhead","textChars":17,"textLines":1,"bbox":[386,390,330,26]}
+{"kind":"textbox","id":"sh/5kb6xkf6","slide":5,"text":"4-20 ms","textPreview":"4-20 ms","textChars":7,"textLines":1,"bbox":[386,420,330,62]}
+{"kind":"textbox","id":"sh/ytsvu9kn","slide":5,"text":"HTTPS overhead is small compared with cloud generation time.","textPreview":"HTTPS overhead is small compared with cloud generation time.","textChars":60,"textLines":1,"bbox":[386,482,330,54]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":5,"text":"Cloud request","textPreview":"Cloud request","textChars":13,"textLines":1,"bbox":[780,390,360,26]}
+{"kind":"textbox","id":"sh/cbulwval","slide":5,"text":"14.7-16.2 s","textPreview":"14.7-16.2 s","textChars":11,"textLines":1,"bbox":[780,420,360,62]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":5,"text":"Current latency is dominated by model-side computation.","textPreview":"Current latency is dominated by model-side computation.","textChars":55,"textLines":1,"bbox":[780,482,360,54]}
+{"kind":"textbox","id":"sh/u54zidon","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"notes","id":"nt/phu6xv","slide":5,"text":""}
+{"kind":"slide","id":"sl/nak58d","slide":6,"title":"CT5195 MASTER CAPSTONE","textShapes":6}
+{"kind":"textbox","id":"sh/dcbulwva","slide":6,"text":"CT5195 MASTER CAPSTONE","textPreview":"CT5195 MASTER CAPSTONE","textChars":22,"textLines":1,"bbox":[42,38,460,24]}
+{"kind":"textbox","id":"sh/6psfil0r","slide":6,"text":"The current data suggests encryption is not the main bottleneck","textPreview":"The current data suggests encryption is not the main bottleneck","textChars":63,"textLines":1,"bbox":[42,72,1080,60]}
+{"kind":"shape","id":"sh/val87ed8","slide":6,"bbox":[42,142,1196,1.4]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":6,"text":"Average end-to-end split latency, seconds","textPreview":"Average end-to-end split latency, seconds","textChars":41,"textLines":1,"bbox":[68,552,620,28]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":6,"text":"Observation: within the same cloud environment, HTTP, AES-GCM, and ChaCha20 differ by less than 0.5 seconds end to end.","textPreview":"Observation: within the same cloud environment, HTTP, AES-GCM, and ChaCha20 differ by less than 0.5 seconds end to end.","textChars":119,"textLines":1,"bbox":[850,198,340,140]}
+{"kind":"textbox","id":"sh/vixczed8","slide":6,"text":"Interpretation: protocol overhead is measured in milliseconds. The larger cost sits in visual embedding generation and cloud decoder execution.","textPreview":"Interpretation: protocol overhead is measured in milliseconds. The larger cost sits in visual embedding generation and cloud decoder exec...","textChars":143,"textLines":1,"bbox":[850,380,340,130]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"chart","id":"ch/kb6xkf6d","slide":6,"name":"","chartType":"bar","bbox":[68,190,720,360]}
+{"kind":"notes","id":"nt/nak58d","slide":6,"text":""}
+{"kind":"slide","id":"sl/66e0pn","slide":7,"title":"CT5195 MASTER CAPSTONE","textShapes":6}
+{"kind":"textbox","id":"sh/bat47y1k","slide":7,"text":"CT5195 MASTER CAPSTONE","textPreview":"CT5195 MASTER CAPSTONE","textChars":22,"textLines":1,"bbox":[42,38,460,24]}
+{"kind":"textbox","id":"sh/4vmtwra5","slide":7,"text":"TDX overhead appears mainly in cloud request and CPU time","textPreview":"TDX overhead appears mainly in cloud request and CPU time","textChars":57,"textLines":1,"bbox":[42,72,1080,60]}
+{"kind":"shape","id":"sh/tgfmlkjm","slide":7,"bbox":[42,142,1196,1.4]}
+{"kind":"textbox","id":"sh/47y1kre1","slide":7,"text":"Cloud request time, seconds","textPreview":"Cloud request time, seconds","textChars":27,"textLines":1,"bbox":[62,544,300,28]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":7,"text":"Cloud CPU time, seconds","textPreview":"Cloud CPU time, seconds","textChars":23,"textLines":1,"bbox":[680,544,300,28]}
+{"kind":"textbox","id":"sh/m58z25kb","slide":7,"text":"Current observation: TDX adds roughly 1.2-1.7 seconds to split total latency and about 2.2-3.0 seconds to cloud CPU time.","textPreview":"Current observation: TDX adds roughly 1.2-1.7 seconds to split total latency and about 2.2-3.0 seconds to cloud CPU time.","textChars":121,"textLines":1,"bbox":[80,610,1080,36]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"chart","id":"ch/a1gvy90j","slide":7,"name":"","chartType":"bar","bbox":[62,184,540,350]}
+{"kind":"chart","id":"ch/zidonyd0","slide":7,"name":"","chartType":"bar","bbox":[680,184,520,350]}
+{"kind":"notes","id":"nt/66e0pn","slide":7,"text":""}
+{"kind":"slide","id":"sl/jhzqe1","slide":8,"title":"CT5195 MASTER CAPSTONE","textShapes":11}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":8,"text":"CT5195 MASTER CAPSTONE","textPreview":"CT5195 MASTER CAPSTONE","textChars":22,"textLines":1,"bbox":[42,38,460,24]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":8,"text":"The findings are useful, but still interim","textPreview":"The findings are useful, but still interim","textChars":42,"textLines":1,"bbox":[42,72,1080,60]}
+{"kind":"shape","id":"sh/vy90je9c","slide":8,"bbox":[42,142,1196,1.4]}
+{"kind":"shape","id":"sh/o7qpg3ex","slide":8,"bbox":[54,190,350,170]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":8,"text":"Finding 1","textPreview":"Finding 1","textChars":9,"textLines":1,"bbox":[72,208,314,34]}
+{"kind":"textbox","id":"sh/61032lsz","slide":8,"text":"HTTPS AES-GCM and ChaCha20 do not create a visible end-to-end latency penalty in the current runs.","textPreview":"HTTPS AES-GCM and ChaCha20 do not create a visible end-to-end latency penalty in the current runs.","textChars":98,"textLines":1,"bbox":[72,252,314,94]}
+{"kind":"shape","id":"sh/vmtwra5g","slide":8,"bbox":[465,190,350,170]}
+{"kind":"textbox","id":"sh/ovahoza1","slide":8,"text":"Finding 2","textPreview":"Finding 2","textChars":9,"textLines":1,"bbox":[483,208,314,34]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":8,"text":"TDX has a larger measurable cost than the protocol choice, especially on cloud-side CPU time.","textPreview":"TDX has a larger measurable cost than the protocol choice, especially on cloud-side CPU time.","textChars":93,"textLines":1,"bbox":[483,252,314,94]}
+{"kind":"shape","id":"sh/1032lszq","slide":8,"bbox":[876,190,350,170]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":8,"text":"Finding 3","textPreview":"Finding 3","textChars":9,"textLines":1,"bbox":[894,208,314,34]}
+{"kind":"textbox","id":"sh/judg7ads","slide":8,"text":"The split architecture is currently compute-bound rather than protocol-bound.","textPreview":"The split architecture is currently compute-bound rather than protocol-bound.","textChars":77,"textLines":1,"bbox":[894,252,314,94]}
+{"kind":"textbox","id":"sh/u9knih4b","slide":8,"text":"Caveats to state clearly","textPreview":"Caveats to state clearly","textChars":24,"textLines":1,"bbox":[54,430,360,34]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":8,"text":"• Non-TDX and TDX runs use different sample counts: 25 and 20 images.\n• The current summary emphasizes averages; variance, P95, throughput, and resource peaks should be added.\n• Encryption, decryption, TLS setup, and key exchange should be timed separately instead of being folded into request latency.","textPreview":"• Non-TDX and TDX runs use different sample counts: 25 and 20 images. | • The current summary emphasizes averages; variance, P95, through...","textChars":302,"textLines":3,"bbox":[54,482,1080,116]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"notes","id":"nt/jhzqe1","slide":8,"text":""}
+{"kind":"slide","id":"sl/12laxj","slide":9,"title":"CT5195 MASTER CAPSTONE","textShapes":15}
+{"kind":"textbox","id":"sh/obm58z25","slide":9,"text":"CT5195 MASTER CAPSTONE","textPreview":"CT5195 MASTER CAPSTONE","textChars":22,"textLines":1,"bbox":[42,38,460,24]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":9,"text":"Next experiments should close the security, performance, and correctness loop","textPreview":"Next experiments should close the security, performance, and correctness loop","textChars":77,"textLines":1,"bbox":[42,72,1080,60]}
+{"kind":"shape","id":"sh/65wjudg7","slide":9,"bbox":[42,142,1196,1.4]}
+{"kind":"shape","id":"sh/hk3q5o7q","slide":9,"bbox":[62,190,520,150]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":9,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[84,212,70,44]}
+{"kind":"textbox","id":"sh/zed8v6ps","slide":9,"text":"Scale the runs","textPreview":"Scale the runs","textChars":14,"textLines":1,"bbox":[170,216,320,32]}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":9,"text":"Use the same image count for TDX and non-TDX; report mean, standard deviation, and P95.","textPreview":"Use the same image count for TDX and non-TDX; report mean, standard deviation, and P95.","textChars":87,"textLines":1,"bbox":[170,262,360,56]}
+{"kind":"shape","id":"sh/hcrmhk3q","slide":9,"bbox":[665,190,520,150]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":9,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[687,212,70,44]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":9,"text":"Split the timers","textPreview":"Split the timers","textChars":16,"textLines":1,"bbox":[773,216,320,32]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":9,"text":"Measure serialization, encryption, decryption, TLS setup, cloud decoder, and edge encoder separately.","textPreview":"Measure serialization, encryption, decryption, TLS setup, cloud decoder, and edge encoder separately.","textChars":101,"textLines":1,"bbox":[773,262,360,56]}
+{"kind":"shape","id":"sh/g3ex0nux","slide":9,"bbox":[62,420,520,150]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":9,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[84,442,70,44]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":9,"text":"Validate outputs","textPreview":"Validate outputs","textChars":16,"textLines":1,"bbox":[170,446,320,32]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":9,"text":"Track matched and unmatched generations between split inference and the local baseline.","textPreview":"Track matched and unmatched generations between split inference and the local baseline.","textChars":87,"textLines":1,"bbox":[170,492,360,56]}
+{"kind":"shape","id":"sh/gr2p8nqx","slide":9,"bbox":[665,420,520,150]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":9,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[687,442,70,44]}
+{"kind":"textbox","id":"sh/yd0z6103","slide":9,"text":"Optimize the path","textPreview":"Optimize the path","textChars":17,"textLines":1,"bbox":[773,446,320,32]}
+{"kind":"textbox","id":"sh/rytsvu9k","slide":9,"text":"Test embedding compression, float16 payloads, batching, or a lighter decoder for latency reduction.","textPreview":"Test embedding compression, float16 payloads, batching, or a lighter decoder for latency reduction.","textChars":99,"textLines":1,"bbox":[773,492,360,56]}
+{"kind":"textbox","id":"sh/za1gvy90","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"notes","id":"nt/12laxj","slide":9,"text":""}
+{"kind":"slide","id":"sl/yj1rdq","slide":10,"title":"Bottom line","textShapes":5}
+{"kind":"textbox","id":"sh/vy90je9c","slide":10,"text":"Bottom line","textPreview":"Bottom line","textChars":11,"textLines":1,"bbox":[42,58,460,48]}
+{"kind":"shape","id":"sh/oj2t83it","slide":10,"bbox":[42,126,1196,1.4]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":10,"text":"The experiment now has a testable route for secure split VLM inference: keep the raw image at the edge, transmit embeddings over protected channels, and run cloud decoding inside a trusted environment.","textPreview":"The experiment now has a testable route for secure split VLM inference: keep the raw image at the edge, transmit embeddings over protecte...","textChars":201,"textLines":1,"bbox":[42,198,980,150]}
+{"kind":"textbox","id":"sh/61032lsz","slide":10,"text":"The strongest current message is that protocol encryption is not the dominant cost. The next research value comes from quantifying and reducing model-side and TDX overhead.","textPreview":"The strongest current message is that protocol encryption is not the dominant cost. The next research value comes from quantifying and re...","textChars":172,"textLines":1,"bbox":[42,420,980,96]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":10,"text":"Next version: stronger statistics and finer-grained security overhead measurement.","textPreview":"Next version: stronger statistics and finer-grained security overhead measurement.","textChars":82,"textLines":1,"bbox":[42,596,920,36]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1178,668,60,24]}
+{"kind":"notes","id":"nt/yj1rdq","slide":10,"text":""}

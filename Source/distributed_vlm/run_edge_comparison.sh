@@ -8,6 +8,7 @@ GENERATIONS="${GENERATIONS:-1}"
 MAX_IMAGES="${MAX_IMAGES:-100}"
 HTTP_MODE="${1:-${HTTP_MODE:-https-aes-gcm}}"
 CLOUD_TARGET="${2:-${CLOUD_TARGET:-127.0.0.1}}"
+SPLIT_MODE="${3:-both}"
 
 mkdir -p "$ROOT/record"
 
@@ -17,6 +18,7 @@ METRICS_CSV="$ROOT/record/distributed_vlm_metrics_${HTTP_MODE}.csv"
 cd "$ROOT"
 
 python3 ./edge.py \
+  --split "$SPLIT_MODE" \
   --transport "$HTTP_MODE" \
   --target "$CLOUD_TARGET" \
   --weights "$MODEL" \
@@ -31,14 +33,16 @@ MATCH_RECORDS=$(grep "matched pair" "$EDGE_LOG")
 MATCHED_PAIR=0
 COMPARED_PAIRS=0
 
-while read -r line; do
-  unmatched=$(echo "$line" | sed -E 's/.*unmatch pair \/ matched pair = ([0-9]+)\/([0-9]+).*/\1/')
-  matched=$(echo "$line" | sed -E 's/.*unmatch pair \/ matched pair = ([0-9]+)\/([0-9]+).*/\2/')
-  compared=$((unmatched + matched))
+if [ -n "$MATCH_RECORDS" ]; then
+  while read -r line; do
+    unmatched=$(echo "$line" | sed -E 's/.*unmatch pair \/ matched pair = ([0-9]+)\/([0-9]+).*/\1/')
+    matched=$(echo "$line" | sed -E 's/.*unmatch pair \/ matched pair = ([0-9]+)\/([0-9]+).*/\2/')
+    compared=$((unmatched + matched))
 
-  MATCHED_PAIR=$((MATCHED_PAIR + matched))
-  COMPARED_PAIRS=$((COMPARED_PAIRS + compared))
-done < <(echo "$MATCH_RECORDS")
+    MATCHED_PAIR=$((MATCHED_PAIR + matched))
+    COMPARED_PAIRS=$((COMPARED_PAIRS + compared))
+  done < <(echo "$MATCH_RECORDS")
+fi
 
 echo "total matched: $MATCHED_PAIR"
 echo "total compared: $COMPARED_PAIRS"
