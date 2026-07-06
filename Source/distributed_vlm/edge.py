@@ -37,6 +37,8 @@ def parse_args():
         "--hf_model", type=str, default="lusxvr/nanoVLM-230M-8k",
         help="HuggingFace repo ID to download from incase --checkpoint isnt set."
     )
+    parser.add_argument("--split", type=str, default="both", choices=["both", "local", "split"],
+                        help="Whether to run the model locally or split between edge and cloud")
     parser.add_argument("--image", type=str, default=None,
                         help="Path to input image")
     parser.add_argument("--target", type=str, default="127.0.0.1",
@@ -293,18 +295,24 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     print(f"[timeing] generate_embedding: {embedding_end - embedding_start} seconds")
     metrics["edge_embedding_cpu_total_s"] = embedding_cpu_end - embedding_cpu_start
 
-    result_list, transfer_metrics = transfer_embdding(args.target, args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
-    split_end = time.perf_counter()
-    metrics["split_latency_s"] = split_end - split_start
-    metrics.update(transfer_metrics)
+    if args.split == "split" or args.split == "both":
+        result_list, transfer_metrics = transfer_embdding(args.target, args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
+        split_end = time.perf_counter()
+        metrics["split_latency_s"] = split_end - split_start
+        metrics.update(transfer_metrics)
+    
 
-    local_generate_start = time.perf_counter()
-    local_generate_cpu_start = cpu_times()
-    nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
-    local_generate_cpu_end = cpu_times()
-    local_generate_end = time.perf_counter()
-    metrics["local_baseline_latency_s"] = local_generate_end - local_generate_start
-    metrics["local_baseline_cpu_total_s"] = local_generate_cpu_end - local_generate_cpu_start
+    if args.split == "local" or args.split == "both":
+        local_generate_start = time.perf_counter()
+        local_generate_cpu_start = cpu_times()
+        nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
+        local_generate_cpu_end = cpu_times()
+        local_generate_end = time.perf_counter()
+        metrics["local_baseline_latency_s"] = local_generate_end - local_generate_start
+        metrics["local_baseline_cpu_total_s"] = local_generate_cpu_end - local_generate_cpu_start
+    
+    if args.split != "both":
+        return
 
 
     unmatched_pair = 0

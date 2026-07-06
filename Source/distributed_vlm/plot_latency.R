@@ -3,7 +3,7 @@
 script_args <- commandArgs(trailingOnly = FALSE)
 script_path <- sub("--file=", "", script_args[grep("^--file=", script_args)])
 script_dir <- if (length(script_path) > 0) dirname(normalizePath(script_path)) else getwd()
-record_dir <- file.path(script_dir, "record")
+record_dir <- file.path(script_dir, "record_all/record_tdx")
 
 csv_files <- c(
   http = file.path(record_dir, "distributed_vlm_metrics_http.csv"),

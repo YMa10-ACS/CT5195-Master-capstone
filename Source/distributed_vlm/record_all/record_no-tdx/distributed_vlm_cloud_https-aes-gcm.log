@@ -1,0 +1,14 @@
+cloud.py startup...
+Starting HTTPS server on 127.0.0.1:https-aes-gcm...
+cert file: /home/y_ma10/CT5195-Master-capstone/Source/cert/cert.pem
+ key file: /home/y_ma10/CT5195-Master-capstone/Source/cert/key.pem
+ * Serving Flask app 'cloud'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on https://127.0.0.1:8443
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [05/Jul/2026 23:15:05] "POST / HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 23:15:50] "POST / HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 23:16:41] "POST / HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 23:17:27] "POST / HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 23:18:05] "POST / HTTP/1.1" 200 -
