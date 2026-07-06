@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+###
+ # @Description: 
+ # @Date: 2026-07-06 19:18:57
+ # @Author: Yaoquan Ma
+### 
 set -e
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -11,16 +16,18 @@ clear_current_records() {
   for mode in $MODES; do
     rm -f "$ROOT/record/distributed_vlm_edge_${mode}.log"
     rm -f "$ROOT/record/distributed_vlm_metrics_${mode}.csv"
+    rm -f "$ROOT/record/distributed_vlm_throughput_${mode}.csv"
   done
 }
 
 rename_records_for_target() {
   target="$1"
-  label="${label//./_}"
+  label="${target//./_}"
 
   for mode in $MODES; do
     edge_log="$ROOT/record/distributed_vlm_edge_${mode}.log"
     metrics_csv="$ROOT/record/distributed_vlm_metrics_${mode}.csv"
+    throughput_csv="$ROOT/record/distributed_vlm_throughput_${mode}.csv"
 
     if [ -f "$edge_log" ]; then
       mv "$edge_log" "$ROOT/record/distributed_vlm_edge_${mode}_${label}.log"
@@ -28,6 +35,10 @@ rename_records_for_target() {
 
     if [ -f "$metrics_csv" ]; then
       mv "$metrics_csv" "$ROOT/record/distributed_vlm_metrics_${mode}_${label}.csv"
+    fi
+
+    if [ -f "$throughput_csv" ]; then
+      mv "$throughput_csv" "$ROOT/record/distributed_vlm_throughput_${mode}_${label}.csv"
     fi
   done
 }

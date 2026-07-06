@@ -14,6 +14,7 @@ mkdir -p "$ROOT/record"
 
 EDGE_LOG="$ROOT/record/distributed_vlm_edge_${HTTP_MODE}.log"
 METRICS_CSV="$ROOT/record/distributed_vlm_metrics_${HTTP_MODE}.csv"
+THROUGHPUT_CSV="$ROOT/record/distributed_vlm_throughput_${HTTP_MODE}.csv"
 
 cd "$ROOT"
 
@@ -26,6 +27,7 @@ python3 ./edge.py \
   --max_images "$MAX_IMAGES" \
   --generations "$GENERATIONS" \
   --metrics_csv "$METRICS_CSV" \
+  --throughput_csv "$THROUGHPUT_CSV" \
   | tee "$EDGE_LOG" 2>&1
 
 MATCH_RECORDS=$(grep "matched pair" "$EDGE_LOG")

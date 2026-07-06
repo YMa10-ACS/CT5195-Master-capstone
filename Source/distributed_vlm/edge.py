@@ -61,6 +61,8 @@ def parse_args():
                         help="Path to CA certificate for HTTPS requests")
     parser.add_argument("--metrics_csv", default=None, type=str,
                         help="Optional CSV file to append per-request metrics")
+    parser.add_argument("--throughput_csv", default=None, type=str,
+                        help="Optional CSV file to append batch-level throughput metrics")
 
     args = parser.parse_args()
     if not args.image and not args.image_dir:
@@ -88,6 +90,15 @@ METRICS_COLUMNS = [
     "cloud_cpu_total",
 ]
 
+THROUGHPUT_COLUMNS = [
+    "transport",
+    "split",
+    "target",
+    "image_count",
+    "batch_total_seconds",
+    "throughput_images_per_minute",
+]
+
 def cpu_times():
     times = psutil.Process(os.getpid()).cpu_times()
     return times.user + times.system
@@ -111,8 +122,6 @@ def end_cpu_sampler(sampler, rss_before_mb):
     return cpu_total, rss_peak_mb
 
 def write_metrics_csv(path, row):
-    if not path:
-        return
     parent_dir = os.path.dirname(path)
     if parent_dir:
         os.makedirs(parent_dir, exist_ok=True)
@@ -122,6 +131,17 @@ def write_metrics_csv(path, row):
         if not file_exists or os.path.getsize(path) == 0:
             writer.writeheader()
         writer.writerow({column: row.get(column, "") for column in METRICS_COLUMNS})
+
+def write_throughput_csv(path, row):
+    parent_dir = os.path.dirname(path)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+    file_exists = os.path.exists(path)
+    with open(path, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=THROUGHPUT_COLUMNS)
+        if not file_exists or os.path.getsize(path) == 0:
+            writer.writeheader()
+        writer.writerow({column: row.get(column, "") for column in THROUGHPUT_COLUMNS})
 
 def target_url_for_transport(target, transport_protocol):
     if transport_protocol == "http":
@@ -380,6 +400,14 @@ def main():
     print(f"throughput images: {len(images)}")
     print(f"throughput total seconds: {batch_total}")
     print(f"throughput images per minute: {throughput_images_per_min}")
+    write_throughput_csv(args.throughput_csv, {
+        "transport": args.transport,
+        "split": args.split,
+        "target": args.target,
+        "image_count": len(images),
+        "batch_total_seconds": batch_total,
+        "throughput_images_per_minute": throughput_images_per_min,
+    })
 
 if __name__ == "__main__":
     main()
