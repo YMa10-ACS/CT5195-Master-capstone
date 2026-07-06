@@ -311,9 +311,12 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
         metrics["local_baseline_latency_s"] = local_generate_end - local_generate_start
         metrics["local_baseline_cpu_total_s"] = local_generate_cpu_end - local_generate_cpu_start
     
+    edge_cpu_end = cpu_times()
+    metrics["edge_cpu_total_s"] = edge_cpu_end - edge_cpu_start
+    write_metrics_csv(args.metrics_csv, metrics)
+
     if args.split != "both":
         return
-
 
     unmatched_pair = 0
     matched_pair = 0
@@ -326,10 +329,6 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
             matched_pair += 1
 
     print(f"unmatch pair / matched pair = {unmatched_pair}/{matched_pair}")
-
-    edge_cpu_end = cpu_times()
-    metrics["edge_cpu_total_s"] = edge_cpu_end - edge_cpu_start
-    write_metrics_csv(args.metrics_csv, metrics)
 
 def main():
     app_name = os.path.basename(__file__)
