@@ -28,7 +28,7 @@ NANOVLM_PATH = os.path.join(PROJECT_ROOT, "nanoVLM")
 sys.path.insert(0, NANOVLM_PATH)
 
 from data.processors import get_tokenizer
-from monitor import read_process_cpu_rss, ProcessSampler
+from monitor import ProcessSampler
 from vlm import load_model, init_image_processor, init_tokenizer
 from vlm import construct_prompt, combined_image_and_text_message, generate
 
@@ -85,6 +85,8 @@ METRICS_COLUMNS = [
     "local_baseline_latency",
     "cloud_total_request",
     "edge_embedding_cpu_total",
+    "edge_embedding_cpu_avg_pct",
+    "edge_embedding_cpu_max_pct",
     "edge_transfer_cpu_total",
     "local_baseline_cpu_total",
     "edge_cpu_total",
@@ -106,20 +108,17 @@ def cpu_times():
 
 def start_cpu_sampler(interval=0.5):
     pid = os.getpid()
-    pre_stats = read_process_cpu_rss(pid)
-    rss_before_mb = pre_stats[1] if pre_stats is not None else 0.0
-
     sampler = ProcessSampler(pid=pid, interval=interval)
     sampler.start()
 
-    return sampler, rss_before_mb
+    return sampler
 
-def end_cpu_sampler(sampler, rss_before_mb):
+def end_cpu_sampler(sampler):
     sampler.stop()
-    cpu_total = sampler.cpu_total
-    rss_after_mb = sampler.rss_max_mb
-    rss_peak_mb = max(rss_before_mb, rss_after_mb)
-    return cpu_total, rss_peak_mb
+    cpu_samples = [cpu for cpu, _ in sampler.samples]
+    cpu_avg_pct = sum(cpu_samples) / len(cpu_samples) if cpu_samples else 0.0
+    cpu_max_pct = max(cpu_samples) if cpu_samples else 0.0
+    return cpu_avg_pct, cpu_max_pct
 
 def write_metrics_csv(path, row):
     parent_dir = os.path.dirname(path)
@@ -323,7 +322,7 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     }
 
     # Start CPU sampler to measure CPU usage during embedding generation
-    edge_embedding_cpu_sampler, rss_before_mb = start_cpu_sampler(interval=0.5)
+    edge_embedding_cpu_sampler = start_cpu_sampler(interval=0.5)
 
     # Start CPU timer for the entire edge processing.
     # Calculate the total CPU time used by the edge device for this image processing.
@@ -342,8 +341,9 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     metrics["edge_embedding_latency"] = embedding_end - embedding_start
     metrics["edge_embedding_cpu_total"] = embedding_cpu_end - embedding_cpu_start
 
-    edge_embedding_cpu, _ = end_cpu_sampler(edge_embedding_cpu_sampler, rss_before_mb)
-    metrics["edge_cpu_total"] = edge_embedding_cpu
+    edge_embedding_cpu_avg_pct, edge_embedding_cpu_max_pct = end_cpu_sampler(edge_embedding_cpu_sampler)
+    metrics["edge_embedding_cpu_avg_pct"] = edge_embedding_cpu_avg_pct
+    metrics["edge_embedding_cpu_max_pct"] = edge_embedding_cpu_max_pct
 
     if args.split == "split" or args.split == "both":
         result_list, transfer_metrics = transfer_embdding(args.target, args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
