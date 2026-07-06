@@ -79,6 +79,7 @@ METRICS_COLUMNS = [
     "transport",
     "payload_bytes",
     "split_latency",
+    "edge_embedding_latency",
     "transfer_latency",
     "network_overhead",
     "local_baseline_latency",
@@ -322,18 +323,24 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
         "transport": args.transport,
     }
 
+    # Start CPU sampler to measure CPU usage during embedding generation
     edge_embedding_cpu_sampler, rss_before_mb = start_cpu_sampler(interval=0.5)
+
+    # Start CPU timer for the entire edge processing.
+    # Calculate the total CPU time used by the edge device for this image processing.
     edge_cpu_start = cpu_times()
 
     split_start = time.perf_counter()
     embedding_cpu_start = cpu_times()
     processed_image, splitted_image_ratio = image_preprocessing(image_path, model, image_processor)
 
+    # Start recording the time taken to generate the embedding for the processed image.
     embedding_start = time.perf_counter()
     projected = generate_embedding(processed_image, model, args.device)
     embedding_end = time.perf_counter()
     embedding_cpu_end = cpu_times()
     print(f"[timeing] generate_embedding: {embedding_end - embedding_start} seconds")
+    metrics["edge_embedding_latency"] = embedding_end - embedding_start
     metrics["edge_embedding_cpu_total"] = embedding_cpu_end - embedding_cpu_start
 
     edge_embedding_cpu, _ = end_cpu_sampler(edge_embedding_cpu_sampler, rss_before_mb)

@@ -13,6 +13,7 @@ csv_files <- c(
 
 latency_columns <- c(
   split_latency = "Split total",
+  edge_embedding_latency = "Edge embedding",
   transfer_latency = "Transfer",
   network_overhead = "Network/protocol overhead",
   cloud_total_request = "Cloud request",
