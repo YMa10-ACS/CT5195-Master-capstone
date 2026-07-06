@@ -28,6 +28,7 @@ NANOVLM_PATH = os.path.join(PROJECT_ROOT, "nanoVLM")
 sys.path.insert(0, NANOVLM_PATH)
 
 from data.processors import get_tokenizer
+from monitor import read_process_cpu_rss, ProcessSampler
 from vlm import load_model, init_image_processor, init_tokenizer
 from vlm import construct_prompt, combined_image_and_text_message, generate
 
@@ -75,21 +76,39 @@ METRICS_COLUMNS = [
     "image",
     "transport",
     "payload_bytes",
-    "split_latency_s",
-    "transfer_latency_s",
-    "network_overhead_s",
-    "local_baseline_latency_s",
-    "cloud_total_request_s",
-    "edge_embedding_cpu_total_s",
-    "edge_transfer_cpu_total_s",
-    "local_baseline_cpu_total_s",
-    "edge_cpu_total_s",
-    "cloud_cpu_total_s",
+    "split_latency",
+    "transfer_latency",
+    "network_overhead",
+    "local_baseline_latency",
+    "cloud_total_request",
+    "edge_embedding_cpu_total",
+    "edge_transfer_cpu_total",
+    "local_baseline_cpu_total",
+    "edge_cpu_total",
+    "cloud_cpu_total",
 ]
 
 def cpu_times():
     times = psutil.Process(os.getpid()).cpu_times()
     return times.user + times.system
+
+def start_cpu_sampler(interval=0.5):
+    pid = os.getpid()
+    pre_stats = read_process_cpu_rss(pid)
+    rss_before_mb = pre_stats[1] if pre_stats is not None else 0.0
+
+    sampler = ProcessSampler(pid=pid, interval=interval)
+    sampler.start()
+
+    return sampler, rss_before_mb
+
+def end_cpu_sampler(sampler, rss_before_mb):
+    sampler.stop()
+    sampler.join()
+    cpu_total = sampler.cpu_total
+    rss_after_mb = sampler.rss_max_mb
+    rss_peak_mb = max(rss_before_mb, rss_after_mb)
+    return cpu_total, rss_peak_mb
 
 def write_metrics_csv(path, row):
     if not path:
@@ -236,12 +255,12 @@ def transfer_embdding(target, transport_protocol, ca_cert,projected, splitted_im
 
     metrics = {
         "payload_bytes": len(payload),
-        "transfer_latency_s": transfer_end - transfer_start,
+        "transfer_latency": transfer_end - transfer_start,
     }
     metrics.update(result_json.get("metrics", {}))
-    metrics["network_overhead_s"] = metrics["transfer_latency_s"] - metrics["cloud_total_request_s"]
+    metrics["network_overhead"] = metrics["transfer_latency"] - metrics["cloud_total_request"]
     transfer_cpu_end = cpu_times()
-    metrics["edge_transfer_cpu_total_s"] = transfer_cpu_end - transfer_cpu_start
+    metrics["edge_transfer_cpu_total"] = transfer_cpu_end - transfer_cpu_start
     return result_list, metrics
 
 def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokonizer, generations, max_new_tokens) :
@@ -282,6 +301,8 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
         "image": image_path,
         "transport": args.transport,
     }
+
+    edge_embedding_cpu_sampler, rss_before_mb = start_cpu_sampler(interval=0.5)
     edge_cpu_start = cpu_times()
 
     split_start = time.perf_counter()
@@ -293,12 +314,15 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     embedding_end = time.perf_counter()
     embedding_cpu_end = cpu_times()
     print(f"[timeing] generate_embedding: {embedding_end - embedding_start} seconds")
-    metrics["edge_embedding_cpu_total_s"] = embedding_cpu_end - embedding_cpu_start
+    metrics["edge_embedding_cpu_total"] = embedding_cpu_end - embedding_cpu_start
+
+    edge_embedding_cpu, _ = end_cpu_sampler(edge_embedding_cpu_sampler, rss_before_mb)
+    metrics["edge_cpu_total"] = edge_embedding_cpu
 
     if args.split == "split" or args.split == "both":
         result_list, transfer_metrics = transfer_embdding(args.target, args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
         split_end = time.perf_counter()
-        metrics["split_latency_s"] = split_end - split_start
+        metrics["split_latency"] = split_end - split_start
         metrics.update(transfer_metrics)
     
 
@@ -308,11 +332,11 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
         nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
         local_generate_cpu_end = cpu_times()
         local_generate_end = time.perf_counter()
-        metrics["local_baseline_latency_s"] = local_generate_end - local_generate_start
-        metrics["local_baseline_cpu_total_s"] = local_generate_cpu_end - local_generate_cpu_start
+        metrics["local_baseline_latency"] = local_generate_end - local_generate_start
+        metrics["local_baseline_cpu_total"] = local_generate_cpu_end - local_generate_cpu_start
     
     edge_cpu_end = cpu_times()
-    metrics["edge_cpu_total_s"] = edge_cpu_end - edge_cpu_start
+    metrics["edge_cpu_total"] = edge_cpu_end - edge_cpu_start
     write_metrics_csv(args.metrics_csv, metrics)
 
     if args.split != "both":
@@ -351,10 +375,10 @@ def main():
         process_image(args, image_path, model, image_processor, text_tokonizer)
     batch_end = time.perf_counter()
 
-    batch_total_s = batch_end - batch_start
-    throughput_images_per_min = len(images) / batch_total_s * 60 if batch_total_s > 0 else 0
+    batch_total = batch_end - batch_start
+    throughput_images_per_min = len(images) / batch_total * 60 if batch_total > 0 else 0
     print(f"throughput images: {len(images)}")
-    print(f"throughput total seconds: {batch_total_s}")
+    print(f"throughput total seconds: {batch_total}")
     print(f"throughput images per minute: {throughput_images_per_min}")
 
 if __name__ == "__main__":

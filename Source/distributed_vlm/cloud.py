@@ -117,8 +117,8 @@ def receive_embedding():
     cpu_end = cpu_times()
 
     metrics = {
-        "cloud_total_request_s": request_end - request_start,
-        "cloud_cpu_total_s": cpu_end - cpu_start,
+        "cloud_total_request": request_end - request_start,
+        "cloud_cpu_total": cpu_end - cpu_start,
     }
     return jsonify({"result": text_list, "metrics": metrics})
 

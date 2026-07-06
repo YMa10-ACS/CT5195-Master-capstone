@@ -12,11 +12,11 @@ csv_files <- c(
 )
 
 latency_columns <- c(
-  split_latency_s = "Split total",
-  transfer_latency_s = "Transfer",
-  network_overhead_s = "Network/protocol overhead",
-  cloud_total_request_s = "Cloud request",
-  local_baseline_latency_s = "Local baseline"
+  split_latency = "Split total",
+  transfer_latency = "Transfer",
+  network_overhead = "Network/protocol overhead",
+  cloud_total_request = "Cloud request",
+  local_baseline_latency = "Local baseline"
 )
 
 summary_csv <- file.path(record_dir, "distributed_vlm_latency_summary.csv")
