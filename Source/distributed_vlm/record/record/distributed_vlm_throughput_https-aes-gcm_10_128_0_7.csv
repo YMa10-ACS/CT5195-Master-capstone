@@ -1,0 +1,2 @@
+transport,split,target,image_count,batch_total_seconds,throughput_images_per_minute
+https-aes-gcm,split,10.128.0.7,10,338.19287244700536,1.7741355566091053

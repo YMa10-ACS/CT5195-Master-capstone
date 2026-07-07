@@ -1,0 +1,2 @@
+transport,split,target,image_count,batch_total_seconds,throughput_images_per_minute
+http,local,127.0.0.1,10,352.90528604800056,1.7001728897832116

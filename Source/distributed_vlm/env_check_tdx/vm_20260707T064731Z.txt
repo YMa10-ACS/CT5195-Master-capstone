@@ -1,0 +1,566 @@
+Environment check label: vm
+UTC timestamp: 20260707T064731Z
+Hostname: instance-tdx
+
+===== OS and kernel =====
+
+$ uname -a
+Linux instance-tdx 7.0.0-1005-gcp #5-Ubuntu SMP PREEMPT Tue May 26 15:11:20 UTC 2026 x86_64 GNU/Linux
+
+$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 26.04 LTS"
+NAME="Ubuntu"
+VERSION_ID="26.04"
+VERSION="26.04 LTS (Resolute Raccoon)"
+VERSION_CODENAME=resolute
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=resolute
+LOGO=ubuntu-logo
+
+$ lsb_release -a
+Distributor ID:	Ubuntu
+Description:	Ubuntu 26.04 LTS
+Release:	26.04
+Codename:	resolute
+
+$ hostnamectl
+Transient hostname: instance-tdx
+   Static hostname: (unset)
+         Icon name: computer-vm
+           Chassis: vm 🖴
+        Machine ID: ffdfe1e191794aac9fbb0edb84bf6e9f
+           Boot ID: 49155975e9744cbcb8e977d8c1882bd9
+    Virtualization: google
+  Operating System: Ubuntu 26.04 LTS
+            Kernel: Linux 7.0.0-1005-gcp
+      Architecture: x86-64
+   Hardware Vendor: Google
+    Hardware Model: Google Compute Engine
+  Firmware Version: Google
+     Firmware Date: Tue 2026-06-02
+      Firmware Age: 1month 4d
+
+===== CPU hardware =====
+
+$ lscpu
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           52 bits physical, 57 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  4
+On-line CPU(s) list:                     0-3
+Vendor ID:                               GenuineIntel
+Model name:                              InteTD X   l
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      2
+Core(s) per socket:                      2
+Socket(s):                               1
+Stepping:                                8
+BogoMIPS:                                5400.00
+Flags:                                   fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+L1d cache:                               96 KiB (2 instances)
+L1i cache:                               64 KiB (2 instances)
+L2 cache:                                4 MiB (2 instances)
+L3 cache:                                105 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-3
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Not affected
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Not affected
+
+$ nproc
+4
+
+$ cat /proc/cpuinfo
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 143
+model name	: InteTD X   l
+stepping	: 8
+cpu MHz		: 2700.000
+cache size	: 107520 KB
+physical id	: 0
+siblings	: 4
+core id		: 0
+cpu cores	: 2
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 35
+wp		: yes
+flags		: fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs eibrs_pbrsb bhi spectre_v2_user
+bogomips	: 5400.00
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 52 bits physical, 57 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 143
+model name	: InteTD X   l
+stepping	: 8
+cpu MHz		: 2700.000
+cache size	: 107520 KB
+physical id	: 0
+siblings	: 4
+core id		: 1
+cpu cores	: 2
+apicid		: 2
+initial apicid	: 2
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 35
+wp		: yes
+flags		: fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs eibrs_pbrsb bhi spectre_v2_user
+bogomips	: 5400.00
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 52 bits physical, 57 bits virtual
+power management:
+
+processor	: 2
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 143
+model name	: InteTD X   l
+stepping	: 8
+cpu MHz		: 2700.000
+cache size	: 107520 KB
+physical id	: 0
+siblings	: 4
+core id		: 0
+cpu cores	: 2
+apicid		: 1
+initial apicid	: 1
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 35
+wp		: yes
+flags		: fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs eibrs_pbrsb bhi spectre_v2_user
+bogomips	: 5400.00
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 52 bits physical, 57 bits virtual
+power management:
+
+processor	: 3
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 143
+model name	: InteTD X   l
+stepping	: 8
+cpu MHz		: 2700.000
+cache size	: 107520 KB
+physical id	: 0
+siblings	: 4
+core id		: 1
+cpu cores	: 2
+apicid		: 3
+initial apicid	: 3
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 35
+wp		: yes
+flags		: fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs eibrs_pbrsb bhi spectre_v2_user
+bogomips	: 5400.00
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 52 bits physical, 57 bits virtual
+power management:
+
+
+===== Memory =====
+
+$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:            14Gi       5.2Gi       443Mi       1.0Mi       9.3Gi       9.4Gi
+Swap:             0B          0B          0B
+
+$ free -b
+               total        used        free      shared  buff/cache   available
+Mem:     15742201856  5611900928   465321984     1056768 10017841152 10130300928
+Swap:              0           0           0
+
+$ cat /proc/meminfo
+MemTotal:       15373244 kB
+MemFree:          454416 kB
+MemAvailable:    9892872 kB
+Buffers:          134432 kB
+Cached:          9260392 kB
+SwapCached:            0 kB
+Active:          5044000 kB
+Inactive:        9026612 kB
+Active(anon):    4682244 kB
+Inactive(anon):      476 kB
+Active(file):     361756 kB
+Inactive(file):  9026136 kB
+Unevictable:        8084 kB
+Mlocked:            8084 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:            164996 kB
+Writeback:             0 kB
+AnonPages:       4684012 kB
+Mapped:           833592 kB
+Shmem:              1032 kB
+KReclaimable:     388224 kB
+Slab:             497564 kB
+SReclaimable:     388224 kB
+SUnreclaim:       109340 kB
+KernelStack:        3808 kB
+PageTables:        21464 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     7686620 kB
+Committed_AS:    7809240 kB
+VmallocTotal:   13743895347199 kB
+VmallocUsed:       12644 kB
+VmallocChunk:          0 kB
+Percpu:             2800 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:    942080 kB
+FilePmdMapped:     51200 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+Unaccepted:            0 kB
+Balloon:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      138380 kB
+DirectMap2M:     7200768 kB
+DirectMap1G:    11534336 kB
+
+===== Disk and filesystem =====
+
+$ lsblk -o NAME,MODEL,SIZE,TYPE,FSTYPE,MOUNTPOINT
+NAME         MODEL          SIZE TYPE FSTYPE   MOUNTPOINT
+loop0                      66.8M loop squashfs /snap/core24/1643
+loop1                     342.3M loop squashfs /snap/google-cloud-cli/467
+loop2                      49.3M loop squashfs /snap/snapd/26865
+loop3                     343.4M loop squashfs /snap/google-cloud-cli/473
+nvme0n1      nvme_card-pd    20G disk          
+├─nvme0n1p1                18.9G part ext4     /
+├─nvme0n1p13               1023M part ext4     /boot
+├─nvme0n1p14                  4M part          
+└─nvme0n1p15                106M part vfat     /boot/efi
+
+$ df -hT
+Filesystem      Type      Size  Used Avail Use% Mounted on
+/dev/root       ext4       19G   16G  3.2G  83% /
+tmpfs           tmpfs     7.4G     0  7.4G   0% /dev/shm
+tmpfs           tmpfs     3.0G  1.0M  3.0G   1% /run
+efivarfs        efivarfs  256K   32K  220K  13% /sys/firmware/efi/efivars
+tmpfs           tmpfs     7.4G     0  7.4G   0% /tmp
+none            tmpfs     1.0M     0  1.0M   0% /run/credentials/systemd-journald.service
+none            tmpfs     1.0M     0  1.0M   0% /run/credentials/systemd-resolved.service
+/dev/nvme0n1p13 ext4      989M  145M  778M  16% /boot
+/dev/nvme0n1p15 vfat      105M  6.3M   99M   7% /boot/efi
+none            tmpfs     1.0M     0  1.0M   0% /run/credentials/systemd-networkd.service
+none            tmpfs     1.0M     0  1.0M   0% /run/credentials/serial-getty@ttyS0.service
+none            tmpfs     1.0M     0  1.0M   0% /run/credentials/getty@tty1.service
+tmpfs           tmpfs     1.5G  8.0K  1.5G   1% /run/user/1002
+
+===== Network =====
+
+$ ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host noprefixroute 
+       valid_lft forever preferred_lft forever
+2: ens3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1460 qdisc mq state UP group default qlen 1000
+    link/ether 42:01:0a:80:00:06 brd ff:ff:ff:ff:ff:ff
+    altname enp0s3
+    altname enx42010a800006
+    inet 10.128.0.6/32 metric 100 scope global dynamic ens3
+       valid_lft 62829sec preferred_lft 62829sec
+    inet6 fe80::4001:aff:fe80:6/64 scope link proto kernel_ll 
+       valid_lft forever preferred_lft forever
+
+$ ip route
+default via 10.128.0.1 dev ens3 proto dhcp src 10.128.0.6 metric 100 
+10.128.0.1 dev ens3 proto dhcp scope link src 10.128.0.6 metric 100 
+169.254.169.254 via 10.128.0.1 dev ens3 proto dhcp src 10.128.0.6 metric 100 
+
+$ ss -tan
+State      Recv-Q Send-Q Local Address:Port     Peer Address:Port 
+LISTEN     0      4096   127.0.0.53%lo:53            0.0.0.0:*    
+LISTEN     0      128          0.0.0.0:8443          0.0.0.0:*    
+LISTEN     0      128          0.0.0.0:8444          0.0.0.0:*    
+LISTEN     0      4096         0.0.0.0:22            0.0.0.0:*    
+LISTEN     0      128          0.0.0.0:8000          0.0.0.0:*    
+LISTEN     0      4096      127.0.0.54:53            0.0.0.0:*    
+ESTAB      0      0         10.128.0.6:22       93.89.249.87:64703
+CLOSE-WAIT 25     0         10.128.0.6:57718    3.170.185.25:443  
+ESTAB      0      0         10.128.0.6:48614 169.254.169.254:80   
+ESTAB      0      0         10.128.0.6:48714 169.254.169.254:80   
+ESTAB      0      2080      10.128.0.6:22       93.89.249.87:62882
+CLOSE-WAIT 25     0         10.128.0.6:54620    3.170.185.33:443  
+CLOSE-WAIT 25     0         10.128.0.6:56722    3.170.185.35:443  
+LISTEN     0      4096            [::]:22               [::]:*    
+
+===== TDX / virtualization indicators =====
+
+$ systemd-detect-virt
+google
+
+$ virt-what
+check_vm_environment.sh: line 22: virt-what: command not found
+
+$ dmesg
+dmesg: read kernel buffer failed: Operation not permitted
+
+$ grep -iE tdx|sev|snp|confidential|td quote|secure arbitration|vmx|hypervisor /proc/cpuinfo
+flags		: fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+flags		: fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+flags		: fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+flags		: fpu vme de pse tsc msr pae cx8 apic sep pge cmov pat clflush dts mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc pebs bts rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq dtes64 ds_cpl ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tdx_guest fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+
+$ grep -iE tdx|sev|snp|confidential|hypervisor|virt /var/log/dmesg
+[    4.433779] kernel: tdx: Guest detected
+[    4.433834] kernel: tdx: Attributes: SEPT_VE_DISABLE
+[    4.433848] kernel: tdx: TD_CTLS: PENDING_VE_DISABLE ENUM_TOPOLOGY VIRT_CPUID2 REDUCE_VE
+[    4.434527] kernel: Hypervisor detected: KVM
+[    4.435686] kernel: Booting paravirtualized kernel on KVM
+[    4.436749] kernel: process: using TDX aware idle routine
+[    4.437270] kernel: Memory Encryption Features active: Intel TDX
+[    4.444150] systemd[1]: Detected virtualization google.
+[    4.444160] systemd[1]: Detected confidential virtualization tdx.
+[   40.238805] kernel: audit: type=1400 audit(1783296883.077:188): apparmor="DENIED" operation="sendmsg" class="file" profile="systemd-detect-virt" name="/apparmor/disconnected/run/systemd/journal/socket" pid=831 comm="systemd-detect-" requested_mask="w" denied_mask="w" fsuid=0 ouid=0
+[   40.265171] kernel: audit: type=1400 audit(1783296883.077:189): apparmor="DENIED" operation="capable" class="cap" profile="systemd-detect-virt" pid=831 comm="systemd-detect-" capability=38  capname="perfmon"
+[   40.299631] kernel: audit: type=1400 audit(1783296883.077:190): apparmor="DENIED" operation="sendmsg" class="file" profile="systemd-detect-virt" name="/apparmor/disconnected/run/systemd/notify" pid=831 comm="systemd-detect-" requested_mask="w" denied_mask="w" fsuid=0 ouid=0
+
+===== Compiler and system libraries =====
+
+$ gcc --version
+gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+$ g++ --version
+g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+$ ldd --version
+ldd (Ubuntu GLIBC 2.43-2ubuntu2) 2.43
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+Written by Roland McGrath and Ulrich Drepper.
+
+$ openssl version -a
+OpenSSL 3.5.5 27 Jan 2026 (Library: OpenSSL 3.5.5 27 Jan 2026)
+built on: Tue Jun  2 17:21:36 2026 UTC
+platform: debian-amd64
+options:  bn(64,64)
+compiler: gcc -fPIC -pthread -m64 -Wa,--noexecstack -Wall -fzero-call-used-regs=used-gpr -Wa,--noexecstack -g -O2 -Werror=implicit-function-declaration -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -ffile-prefix-map=/build/openssl-38okA3/openssl-3.5.5=. -fstack-protector-strong -fstack-clash-protection -Wformat -Werror=format-security -fcf-protection -march=x86-64-v3 -fdebug-prefix-map=/build/openssl-38okA3/openssl-3.5.5=/usr/src/openssl-3.5.5-1ubuntu3.2 -DOPENSSL_USE_NODELETE -DL_ENDIAN -DOPENSSL_PIC -DOPENSSL_BUILDING_OPENSSL -DZLIB -DZSTD -DNDEBUG -Wdate-time -D_FORTIFY_SOURCE=3
+OPENSSLDIR: "/usr/lib/ssl"
+ENGINESDIR: "/usr/lib/x86_64-linux-gnu/engines-3"
+MODULESDIR: "/usr/lib/x86_64-linux-gnu/ossl-modules"
+Seeding source: os-specific JITTER (3060300)
+CPUINFO: OPENSSL_ia32cap=0xfefab2175fa9af7f:0x1b415f46f1bf27e9:0x00001c30bfc14410:0x0000000000000000:0x0000000000000000
+
+$ curl --version
+curl 8.18.0 (x86_64-pc-linux-gnu) libcurl/8.18.0 OpenSSL/3.5.5 zlib/1.3.1 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.8 libpsl/0.21.2 libssh2/1.11.1 nghttp2/1.68.0 librtmp/2.3 mit-krb5/1.22.1 OpenLDAP/2.6.10
+Release-Date: 2026-01-07, security patched: 8.18.0-1ubuntu2.2
+Protocols: dict file ftp ftps gopher gophers http https imap imaps ipfs ipns ldap ldaps mqtt pop3 pop3s rtmp rtsp scp sftp smb smbs smtp smtps telnet tftp ws wss
+Features: alt-svc AsynchDNS brotli GSS-API HSTS HTTP2 HTTPS-proxy IDN IPv6 Kerberos Largefile libz NTLM PSL SPNEGO SSL threadsafe TLS-SRP UnixSockets zstd
+
+$ git --version
+git version 2.53.0
+
+===== Python runtime =====
+
+$ which python3
+/usr/bin/python3
+
+$ python3 --version
+Python 3.14.4
+
+$ python3 -c import sys,platform; print('executable:', sys.executable); print('version:', sys.version); print('platform:', platform.platform()); print('machine:', platform.machine())
+executable: /usr/bin/python3
+version: 3.14.4 (main, Jun 18 2026, 14:25:02) [GCC 15.2.0]
+platform: Linux-7.0.0-1005-gcp-x86_64-with-glibc2.43
+machine: x86_64
+
+$ python3 -m pip --version
+pip 25.1.1 from /usr/lib/python3/dist-packages/pip (python 3.14)
+
+$ python3 -m pip freeze
+attrs==25.4.0
+autocommand==2.2.2
+Automat==25.4.16
+babel==2.17.0
+bcc==0.35.0
+bcrypt==5.0.0
+blinker==1.9.0
+boto3==1.40.72
+botocore==1.40.72
+certifi==2026.1.4
+chardet==5.2.0
+click==8.1.8
+command-not-found==0.3
+configobj==5.0.9
+constantly==23.10.4
+cryptography==46.0.5
+dbus-python==1.4.0
+distro==1.9.0
+distro-info==1.15
+httplib2==0.22.0
+hyperlink==21.0.0
+idna==3.11
+incremental==24.7.2
+inflect==7.5.0
+jaraco.context==6.0.1
+jaraco.functools==4.1.0
+jaraco.text==4.0.0
+Jinja2==3.1.6
+jmespath==1.0.1
+jsonpatch==1.32
+jsonpointer==2.4
+jsonschema==4.19.2
+jsonschema-specifications==2023.12.1
+launchpadlib==2.1.0
+lazr.restfulclient==0.14.6
+lazr.uri==1.0.6
+libpass==1.9.3
+linkify-it-py==2.0.3
+markdown-it-py==3.0.0
+MarkupSafe==3.0.3
+mdurl==0.1.2
+more-itertools==10.8.0
+netaddr==1.3.0
+netifaces==0.11.0
+oauthlib==3.3.1
+packaging==26.0
+pexpect==4.9.0
+ptyprocess==0.7.0
+pyasn1==0.6.3
+pyasn1_modules==0.4.1
+Pygments==2.19.2
+PyGObject==3.56.2
+PyHamcrest==2.1.0
+PyJWT==2.10.1
+pyOpenSSL==25.3.0
+pyparsing==3.3.2
+pyserial==3.5
+python-apt==3.1.0+ubuntu1
+python-dateutil==2.9.0
+python-debian==1.0.1+ubuntu2
+python-magic==0.4.27
+PyYAML==6.0.3
+referencing==0.36.2
+requests==2.32.5
+rich==13.9.4
+rpds-py==0.27.1
+s3transfer==0.14.0
+service-identity==24.2.0
+setuptools==78.1.1
+six==1.17.0
+sos==4.10.2
+ssh-import-id==5.11
+systemd-python==235
+Twisted==25.5.0
+typeguard==4.4.4
+typing_extensions==4.15.0
+ubuntu-pro-client==8001
+uc-micro-py==1.0.3
+ufw==0.36.2
+unattended-upgrades==0.1
+urllib3==2.6.3
+wadllib==2.0.0
+wheel==0.46.3
+zipp==3.23.0
+zope.interface==8.2
+
+===== Project Python libraries =====
+
+$ python3 -c mods=['torch','torchvision','numpy','PIL','requests','flask','psutil','transformers']; import importlib; [print(f'{m}: '+getattr(importlib.import_module(m), '__version__', 'version_attr_missing')) if importlib.util.find_spec(m) else print(f'{m}: not installed') for m in mods]
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    mods=['torch','torchvision','numpy','PIL','requests','flask','psutil','transformers']; import importlib; [print(f'{m}: '+getattr(importlib.import_module(m), '__version__', 'version_attr_missing')) if importlib.util.find_spec(m) else print(f'{m}: not installed') for m in mods]
+                                                                                                                                                                                                            ^^^^^^^^^^^^^^
+AttributeError: module 'importlib' has no attribute 'util'
+
+$ python3 -c import torch; print('torch:', torch.__version__); print('cuda available:', torch.cuda.is_available()); print('cuda version:', getattr(torch.version, 'cuda', None)); print('mps available:', hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()); print('num threads:', torch.get_num_threads()); print('num interop threads:', torch.get_num_interop_threads())
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import torch; print('torch:', torch.__version__); print('cuda available:', torch.cuda.is_available()); print('cuda version:', getattr(torch.version, 'cuda', None)); print('mps available:', hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()); print('num threads:', torch.get_num_threads()); print('num interop threads:', torch.get_num_interop_threads())
+    ^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'torch'
+
+===== Important environment variables =====
+
+$ env
+SHELL=/bin/bash
+PWD=/home/gcp-tdx
+LOGNAME=gcp-tdx
+XDG_SESSION_TYPE=tty
+HOME=/home/gcp-tdx
+LANG=C.UTF-8
+LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:
+SSH_CONNECTION=93.89.249.87 62882 10.128.0.6 22
+LESSCLOSE=/usr/bin/lesspipe %s %s
+XDG_SESSION_CLASS=user
+TERM=xterm-256color
+LESSOPEN=| /usr/bin/lesspipe %s
+USER=gcp-tdx
+SHLVL=2
+XDG_SESSION_ID=30
+XDG_RUNTIME_DIR=/run/user/1002
+SSH_CLIENT=93.89.249.87 62882 22
+DEBUGINFOD_URLS=https://debuginfod.ubuntu.com 
+XDG_DATA_DIRS=/usr/local/share:/usr/share:/var/lib/snapd/desktop
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1002/bus
+SSH_TTY=/dev/pts/0
+_=/usr/bin/env
