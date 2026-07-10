@@ -7,6 +7,7 @@ import psutil
 from functools import wraps
 from flask import Flask, request, jsonify
 from vlm import init_tokenizer
+from monitor import ProcessSampler
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
@@ -77,12 +78,25 @@ def cpu_times():
     times = psutil.Process(os.getpid()).cpu_times()
     return times.user + times.system
 
+def start_cpu_sampler(interval=0.5):
+    sampler = ProcessSampler(pid=os.getpid(), interval=interval)
+    sampler.start()
+    return sampler
+
+def end_cpu_sampler(sampler):
+    sampler.stop()
+    cpu_samples = [cpu for cpu, _ in sampler.samples]
+    cpu_avg_pct = sum(cpu_samples) / len(cpu_samples) if cpu_samples else 0.0
+    cpu_max_pct = max(cpu_samples) if cpu_samples else 0.0
+    return cpu_avg_pct, cpu_max_pct
+
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
 def receive_embedding():
     request_start = time.perf_counter()
     cpu_start = cpu_times()
+    cpu_sampler = start_cpu_sampler(interval=0.5)
     torch.manual_seed(0)
     device = app.config["device"]
     prompt = app.config["prompt"]
@@ -115,10 +129,13 @@ def receive_embedding():
                 )
     request_end = time.perf_counter()
     cpu_end = cpu_times()
+    cloud_cpu_avg_pct, cloud_cpu_max_pct = end_cpu_sampler(cpu_sampler)
 
     metrics = {
         "cloud_total_request": request_end - request_start,
         "cloud_cpu_total": cpu_end - cpu_start,
+        "cloud_cpu_avg_pct": cloud_cpu_avg_pct,
+        "cloud_cpu_max_pct": cloud_cpu_max_pct,
     }
     return jsonify({"result": text_list, "metrics": metrics})
 
