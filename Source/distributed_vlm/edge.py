@@ -68,7 +68,12 @@ def parse_args():
     if not args.image and not args.image_dir:
         parser.error("Either --image or --image_dir must be provided")
 
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        device = "cpu"
     args.device = device
 
     return args
@@ -89,8 +94,11 @@ METRICS_COLUMNS = [
     "edge_embedding_cpu_max_pct",
     "edge_transfer_cpu_total",
     "local_baseline_cpu_total",
-    "edge_cpu_total",
+    "edge_generate_cpu_avg_pct",
+    "edge_generate_cpu_max_pct",
     "cloud_cpu_total",
+    "cloud_cpu_avg_pct",
+    "cloud_cpu_max_pct",
 ]
 
 THROUGHPUT_COLUMNS = [
@@ -132,6 +140,9 @@ def write_metrics_csv(path, row):
         writer.writerow({column: row.get(column, "") for column in METRICS_COLUMNS})
 
 def write_throughput_csv(path, row):
+    if not path:
+        return
+
     parent_dir = os.path.dirname(path)
     if parent_dir:
         os.makedirs(parent_dir, exist_ok=True)
@@ -230,7 +241,7 @@ def generate_embedding(processed_image, model, device):
 
     return projected
 
-def transfer_embdding(target, transport_protocol, ca_cert,projected, splitted_image_ratio, prompt, generations):
+def transfer_embdding(session, target, transport_protocol,projected, splitted_image_ratio, prompt, generations):
     transfer_cpu_start = cpu_times()
 
     # 5) Transfer embedding
@@ -252,13 +263,13 @@ def transfer_embdding(target, transport_protocol, ca_cert,projected, splitted_im
     print(f"target_url: {target_url}")
     transfer_start = time.perf_counter()
     if transport_protocol == "http":
-        response = requests.post(
+        response = session.post(
             target_url,
             data=payload,
             headers={"Visual-Meta": json.dumps(metadata)}
         )
     else:
-        response = requests.post(
+        response = session.post(
             target_url,
             data=payload,
             headers={"Visual-Meta": json.dumps(metadata)},
@@ -312,7 +323,7 @@ def generate_text_by_embedding(model, device, projected, splitted_image_ratio, p
             )
     return text_list
 
-def process_image(args, image_path, model, image_processor, text_tokonizer):
+def process_image(args, session, image_path, model, image_processor, text_tokonizer):
     result_list = []
     nanovlm_list = []
     metrics = {
@@ -323,10 +334,6 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
 
     # Start CPU sampler to measure CPU usage during embedding generation
     edge_embedding_cpu_sampler = start_cpu_sampler(interval=0.5)
-
-    # Start CPU timer for the entire edge processing.
-    # Calculate the total CPU time used by the edge device for this image processing.
-    edge_cpu_start = cpu_times()
 
     split_start = time.perf_counter()
     embedding_cpu_start = cpu_times()
@@ -346,23 +353,28 @@ def process_image(args, image_path, model, image_processor, text_tokonizer):
     metrics["edge_embedding_cpu_max_pct"] = edge_embedding_cpu_max_pct
 
     if args.split == "split" or args.split == "both":
-        result_list, transfer_metrics = transfer_embdding(args.target, args.transport, args.ca_cert, projected, splitted_image_ratio, args.prompt, args.generations)
+        result_list, transfer_metrics = transfer_embdding(session, args.target, args.transport, projected, splitted_image_ratio, args.prompt, args.generations)
         split_end = time.perf_counter()
         metrics["split_latency"] = split_end - split_start
         metrics.update(transfer_metrics)
     
 
     if args.split == "local" or args.split == "both":
+        # Start CPU sampler to measure CPU usage during embedding generation
+        edge_generate_cpu_sampler = start_cpu_sampler(interval=0.5)
         local_generate_start = time.perf_counter()
         local_generate_cpu_start = cpu_times()
         nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
+        
         local_generate_cpu_end = cpu_times()
         local_generate_end = time.perf_counter()
         metrics["local_baseline_latency"] = local_generate_end - local_generate_start
         metrics["local_baseline_cpu_total"] = local_generate_cpu_end - local_generate_cpu_start
+        
+        edge_generate_cpu_avg_pct, edge_generate_cpu_max_pct = end_cpu_sampler(edge_generate_cpu_sampler)
+        metrics["edge_generate_cpu_avg_pct"] = edge_generate_cpu_avg_pct
+        metrics["edge_generate_cpu_max_pct"] = edge_generate_cpu_max_pct
     
-    edge_cpu_end = cpu_times()
-    metrics["edge_cpu_total"] = edge_cpu_end - edge_cpu_start
     write_metrics_csv(args.metrics_csv, metrics)
 
     if args.split != "both":
@@ -395,11 +407,12 @@ def main():
         images = collect_images(args.image_dir, args.max_images)
         print(f"collect {len(images)} images from {args.image_dir}")
 
-    batch_start = time.perf_counter()
-    for index, image_path in enumerate(images, start=1):
-        print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")
-        process_image(args, image_path, model, image_processor, text_tokonizer)
-    batch_end = time.perf_counter()
+    with requests.Session() as session:
+        batch_start = time.perf_counter()
+        for index, image_path in enumerate(images, start=1):
+            print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")
+            process_image(args, session, image_path, model, image_processor, text_tokonizer)
+        batch_end = time.perf_counter()
 
     batch_total = batch_end - batch_start
     throughput_images_per_min = len(images) / batch_total * 60
