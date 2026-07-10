@@ -2,7 +2,6 @@
 import sys, os, json, time
 import numpy as np
 import torch
-import argparse
 import psutil
 from functools import wraps
 from flask import Flask, request, jsonify
@@ -14,7 +13,6 @@ sys.path.insert(0, PROJECT_ROOT)
 
 from vlm import load_model, combined_image_and_text_message, construct_prompt, generate
 
-import ssl
 
 def time_using(func):
     @wraps(func)
@@ -29,26 +27,14 @@ def time_using(func):
         return result
     return wrapper
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--hf_model", type=str, default="lusxvr/nanoVLM-230M-8k",
-        help="HuggingFace repo ID to download from incase --checkpoint isnt set."
-    )
-    parser.add_argument("--image", type=str, default="assets/image.png",
-                        help="Path to input image")
-    parser.add_argument("--prompt", type=str, default="What is this?",
-                        help="Text prompt to feed the model")
-    parser.add_argument("--max_new_tokens", type=int, default=300,
-                        help="Maximum number of tokens per output")
-    parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")
-    parser.add_argument("--transport", choices=["http", "https-aes-gcm", "https-chacha20"], default="http",
-                        help="Transport protocol used to send visual embeddings")
-    args = parser.parse_args()
+def parse_env():
+    args = dict()
+    args["weights"] = os.environ.get("WEIGHTS", "lusxvr/nanoVLM-230M-8k")
+    args["prompt"] = os.environ.get("PROMPT", "What is this?")
+    args["max_new_tokens"] = int(os.environ.get("MAX_NEW_TOKENS", "300"))
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
-    args.device = device
+    args["device"] = device
 
     return args
 
@@ -139,37 +125,25 @@ def receive_embedding():
     }
     return jsonify({"result": text_list, "metrics": metrics})
 
+model = None
+tokenizer = None
 
-if __name__ == "__main__":
+def create_app():
+    global model, tokenizer
+
     app_name = os.path.basename(__file__)
     print(f"{app_name} startup...")
-    args = parse_args()
+    args = parse_env()
 
-    model = load_model(args.weights, args.device)
+    model = load_model(args["weights"], args["device"])
     tokenizer = init_tokenizer(model)
 
-    app.config["prompt"] = args.prompt
-    app.config["max_new_tokens"] = args.max_new_tokens
-    app.config["device"] = args.device
+    app.config["prompt"] = args["prompt"]
+    app.config["max_new_tokens"] = args["max_new_tokens"]
+    app.config["device"] = args["device"]
 
-    if args.transport == "http" :
-        app.run(host=args.host, port=8000)
-        exit
+    return app
 
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-
-    # SSL context for HTTPS
-    print(f"Starting HTTPS server on {args.host}:{args.transport}...")
-    cert_path = os.path.join(PROJECT_ROOT, "cert", "cert.pem")
-    key_path = os.path.join(PROJECT_ROOT, "cert", "key.pem")
-    print(f"cert file: {cert_path}\n key file: {key_path}")
-
-    context.load_cert_chain(cert_path, key_path)
-    if args.transport == "https-aes-gcm":
-        context.set_ciphers("ECDHE-RSA-AES128-GCM-SHA256")
-        app.run(host=args.host, port=8443, ssl_context=context)
-    elif args.transport == "https-chacha20":
-        context.set_ciphers("ECDHE-RSA-CHACHA20-POLY1305")
-        app.run(host=args.host, port=8444, ssl_context=context)
-
-    exit
+if __name__ == "__main__":
+    app = create_app()
+    app.run(host="0.0.0.0", port=8000)
