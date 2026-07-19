@@ -1,0 +1,241 @@
+edge.py startup...
+resize to max side len : True
+Resize to max side len: True
+collect 10 images from /home/y_ma10/CT5195-Master-capstone/Source/distributed_vlm/../datasets/ai2d/
+===== Image 1/10: 000000_00.jpg =====
+[timeing] image_preprocessing: 0.1217655390209984 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([17, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([17, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([17, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 20.845118155004457 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (17, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: The diagram illustrates the process of photosynthesis, which is the process by which green plants and some other organisms convert sunlight into chemical energy in the form of glucose. This process is essential for the survival of plants and is also the primary source of oxygen in the Earth's atmosphere.
+===== Image 2/10: 000001_00.jpg =====
+[timeing] image_preprocessing: 0.09644877599203028 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([13, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([13, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([13, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 15.932752004999202 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (13, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: This is a diagram illustrating the evolutionary relationships between various species of animals, specifically focusing on the evolution of the kangaroo rat, jack rabbit, and other animals. The arrows indicate the direction of evolution, showing how different species have adapted to their environments over time.
+===== Image 3/10: 000002_00.jpg =====
+[timeing] image_preprocessing: 0.11727955599781126 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([17, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([17, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([17, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 20.850374803005252 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (17, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: This is a detailed anatomical illustration of the human respiratory system, showcasing the structure and function of the trachea, bronchi, bronchioles, lungs, and diaphragm. The image is a clear and informative depiction of the respiratory system, providing a comprehensive view of the respiratory process.
+===== Image 4/10: 000003_00.jpg =====
+[timeing] image_preprocessing: 0.08841180999297649 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([13, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([13, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([13, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 15.919652146025328 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (13, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: This is a diagram illustrating the process of photosynthesis in plants. Photosynthesis is the process by which plants convert sunlight, carbon dioxide, and water into glucose and oxygen. The diagram shows a plant with its roots, leaves, and roots, with sunlight, carbon dioxide, and water being absorbed by the roots and transported to the leaves. The diagram also shows the process of photosynthesis in the soil, with water and minerals being absorbed by the roots and transported to the soil.
+===== Image 5/10: 000004_00.jpg =====
+[timeing] image_preprocessing: 0.06352613001945429 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([9, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([9, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([9, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 10.665612315002363 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (9, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: The diagram represents a food web, which is a complex network of feeding relationships among organisms. The food web includes various species such as Dingoes, Crocodiles, Frill-necked lizards, Gould's goanna, Termites, Blue-winged kookaburra, Northern brown bandicoot, Mice and rats, and Eucalyptus.
+Answer: Food web
+===== Image 6/10: 000005_00.jpg =====
+[timeing] image_preprocessing: 0.09716374397976324 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([13, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([0.0039, 0.0039, 0.0039, 0.0039, 0.0039, 0.0039, 0.0039, 0.0039, 0.0039,
+        0.0039])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([13, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([13, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 15.558322377997683 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (13, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: This image is an educational slide about different types of rocks, specifically focusing on igneous, metamorphic, and sedimentary rocks. The slide is divided into three sections, each with a title and an image of a rock. The title "Types of Rocks" is prominently displayed at the top, followed by the three rock types listed below: Igneous Rocks, Metamorphic Rocks, and Sedimentary Rocks.
+
+The Igneous Rocks section features an image of a bright, fiery lava flow, which is a common example of igneous rocks. The Metamorphic Rocks section shows a close-up of a polished, smooth, and polished metamorphic rock, which is a type of sedimentary rock. The Sedimentary Rocks section displays a close-up of a coarse-grained rock, which is a type of sedimentary rock.
+
+The background of the slide is a gradient of blue, transitioning from a darker shade at the top to a lighter shade at the bottom. The overall layout is simple and educational, designed to clearly present the different rock types and their respective characteristics.
+===== Image 7/10: 000006_00.jpg =====
+[timeing] image_preprocessing: 0.10125310401781462 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([17, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([17, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([17, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 20.813455946015893 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (17, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: The image depicts a colorful diagram illustrating the geological layers of the Earth. It shows a variety of rock types, including igneous, sedimentary, and metamorphic rocks, each represented by different colors and labeled with their respective names. The diagram is designed to help students understand the different types of rocks and their characteristics.
+===== Image 8/10: 000007_00.jpg =====
+[timeing] image_preprocessing: 0.15257405801094137 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([17, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([0.9961, 0.9961, 0.9961, 0.9961, 0.9961, 0.9961, 0.9961, 0.9961, 0.9961,
+        0.9961])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([17, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([17, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 20.844790992996423 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (17, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: The diagram illustrates the concept of tidal bulges in the context of the Moon's orbit. A tidal bulge is a region of mass where the gravitational pull of the Moon is stronger than that of the Sun, resulting in higher tides. This phenomenon occurs when the Moon's gravitational force is stronger than the Sun's, causing the bulge to bulge outward. The diagram also shows the gravitational attraction of the bulge and the Moon, indicating the direction of the gravitational pull.
+===== Image 9/10: 000008_00.jpg =====
+[timeing] image_preprocessing: 0.12603755001327954 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([17, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([17, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([17, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 20.841878731007455 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (17, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: The diagram illustrates a food web, which is a complex network of feeding relationships among different species in an ecosystem. Each organism is represented by a box, and the arrows indicate the direction of energy flow from one organism to another.
+Answer: food web
+===== Image 10/10: 000009_00.jpg =====
+[timeing] image_preprocessing: 0.10968766099540517 seconds
+img_t type: <class 'torch.Tensor'>
+img_t shape: torch.Size([17, 3, 512, 512])
+img_t dtype: torch.float32
+img_t device: cpu
+img_t sample: tensor([1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000])
+vision_out type: <class 'torch.Tensor'>
+vision_out shape: torch.Size([17, 1024, 768])
+vision_out dtype: torch.float32
+vision_out device: cpu
+projected type: <class 'torch.Tensor'>
+projected shape: torch.Size([17, 64, 576])
+projected dtype: torch.float32
+projected device: cpu
+[timeing] generate_embedding: 20.813304874987807 seconds
+data type: <class 'numpy.ndarray'>
+data shape:  (17, 64, 576)
+data dtype:  float32
+target_url: https://10.128.0.6:8443
+status code: 200
+  >> Generation 1: This image is a diagram illustrating the life cycle of a mosquito, showing the stages from egg to adult. The diagram uses a circular flow chart format with arrows to indicate the progression from one stage to the next. Each stage is represented by a circular icon, and the labels are placed directly below each icon to provide context for the stage.
+throughput images: 10
+throughput total seconds: 347.5657350429974
+throughput images per minute: 1.7262921499605648

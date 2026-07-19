@@ -1,2 +1,0 @@
-transport,split,target,image_count,batch_total_seconds,throughput_images_per_minute
-https-chacha20,split,10.128.0.6,10,355.3511717090005,1.6884705828164375

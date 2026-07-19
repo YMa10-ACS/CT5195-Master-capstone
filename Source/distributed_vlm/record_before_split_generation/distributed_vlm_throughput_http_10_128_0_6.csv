@@ -1,0 +1,2 @@
+transport,split,target,image_count,batch_total_seconds,throughput_images_per_minute
+http,split,10.128.0.6,10,349.49324349398375,1.7167713859118667

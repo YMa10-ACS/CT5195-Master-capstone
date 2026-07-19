@@ -1,8 +1,0 @@
-file,transport,split,target,image_count,batch_total_seconds,seconds_per_image,throughput_images_per_minute
-distributed_vlm_throughput_http_10_128_0_6.csv,http,split,10.128.0.6,10,354.92108853800164,35.49210885380016,1.6905166229246409
-distributed_vlm_throughput_http_10_128_0_7.csv,http,split,10.128.0.7,10,338.98833940199984,33.898833940199985,1.7699723862432666
-distributed_vlm_throughput_http_local.csv,http,local,127.0.0.1,10,352.90528604800056,35.29052860480006,1.7001728897832116
-distributed_vlm_throughput_https-aes-gcm_10_128_0_6.csv,https-aes-gcm,split,10.128.0.6,10,355.47032487498655,35.547032487498655,1.6879046097898913
-distributed_vlm_throughput_https-aes-gcm_10_128_0_7.csv,https-aes-gcm,split,10.128.0.7,10,338.19287244700536,33.81928724470053,1.7741355566091053
-distributed_vlm_throughput_https-chacha20_10_128_0_6.csv,https-chacha20,split,10.128.0.6,10,355.3511717090005,35.53511717090005,1.6884705828164375
-distributed_vlm_throughput_https-chacha20_10_128_0_7.csv,https-chacha20,split,10.128.0.7,10,338.1629224470089,33.81629224470089,1.7742926860765516
