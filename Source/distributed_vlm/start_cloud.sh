@@ -31,13 +31,13 @@ CLOUD_PID="$ROOT/record/distributed_vlm_cloud_${HTTP_MODE}.pid"
 cd "$ROOT"
 
 if [ "$HTTP_MODE" == "http" ]; then
-  gunicorn -k gthread -w 1 --threads 4 \
+  gunicorn -k gthread -w 1 --threads 1 \
     --keep-alive 30 \
     -b ${CLOUD_HOST}:${PORT} \
     "cloud:create_app()" \
     2>&1 | tee "$CLOUD_LOG" &
 else
-  gunicorn -k gthread -w 1 --threads 4 \
+  gunicorn -k gthread -w 1 --threads 1 \
     --keep-alive 30 \
     -b ${CLOUD_HOST}:${PORT} \
     --certfile ../cert/cert.pem \
