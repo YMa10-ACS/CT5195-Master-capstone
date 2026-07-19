@@ -7,6 +7,7 @@ Author: Yaoquan Ma
 
 import torch
 import sys, os
+import time
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
@@ -67,8 +68,18 @@ def combined_image_and_text_message(model, tokens, projected):
 
     return token_embd
 
+def add_timing(timing_metrics, metric_name, elapsed):
+    if timing_metrics is not None:
+        timing_metrics[metric_name] = timing_metrics.get(metric_name, 0.0) + elapsed
+
+
+def add_count(timing_metrics, metric_name, count):
+    if timing_metrics is not None:
+        timing_metrics[metric_name] = timing_metrics.get(metric_name, 0) + count
+
+
 @torch.inference_mode()
-def generate(model, generations, device, input_ids, token_embd, attention_mask=None, max_new_tokens=5, top_k=50, top_p=0.9, temperature=0.5, greedy=False):
+def generate(model, generations, device, input_ids, token_embd, attention_mask=None, max_new_tokens=5, top_k=50, top_p=0.9, temperature=0.5, greedy=False, timing_metrics=None):
         
         text_list = []
         for i in range(generations) :
@@ -76,36 +87,52 @@ def generate(model, generations, device, input_ids, token_embd, attention_mask=N
             batch_size = input_ids.size(0) # Or token_embd.size(0)
             
             # --- Multimodal Prefill Phase ---
+            prefill_start = time.perf_counter()
             prefill_output, kv_cache_list = model.decoder(
                 token_embd,
                 attention_mask=attention_mask, # Use the provided attention mask
                 kv_cache=None,
-                start_pos=0
+                start_pos=0,
+                timing_metrics=timing_metrics
             )
+            add_timing(timing_metrics, "cloud_generate_prefill_time", time.perf_counter() - prefill_start)
             
             last_token_output_from_prefill = prefill_output[:, -1, :] 
             
+            head_start = time.perf_counter()
             if not model.decoder.lm_use_tokens:
                 current_logits = model.decoder.head(last_token_output_from_prefill) 
             else:
                 current_logits = last_token_output_from_prefill 
+            add_timing(timing_metrics, "cloud_generate_head_time", time.perf_counter() - head_start)
 
             # Store newly generated token IDs
             newly_generated_ids_list = []
 
             # --- Decode Phase by sampling tokens autoregressively using the kv-cache ---
             for _ in range(max_new_tokens):
+                sample_start = time.perf_counter()
                 if greedy:
                     next_token_id = torch.argmax(current_logits, dim=-1, keepdim=True)
                 else:
                     filtered_logits = top_k_top_p_filtering(current_logits, top_k=top_k, top_p=top_p)
                     probs = torch.softmax(filtered_logits / temperature, dim=-1)
                     next_token_id = torch.multinomial(probs, num_samples=1)
+                add_timing(timing_metrics, "cloud_generate_sample_time", time.perf_counter() - sample_start)
                 
                 newly_generated_ids_list.append(next_token_id)
+                add_count(timing_metrics, "cloud_generate_tokens", next_token_id.numel())
+
+                if (
+                    model.tokenizer.eos_token_id is not None
+                    and (next_token_id == model.tokenizer.eos_token_id).all()
+                ):
+                    break
                 
                 # Embed the newly generated token
+                token_embedding_start = time.perf_counter()
                 next_token_embed = model.decoder.token_embedding(next_token_id) # [B, 1, D_lm]
+                add_timing(timing_metrics, "cloud_generate_token_embedding_time", time.perf_counter() - token_embedding_start)
                 
                 # The start_pos for the new token is the current total sequence length *before* adding this new token
                 current_token_start_pos = current_total_seq_len
@@ -113,27 +140,35 @@ def generate(model, generations, device, input_ids, token_embd, attention_mask=N
 
                 # update attention mask
                 if attention_mask is not None:
+                    attention_mask_start = time.perf_counter()
                     attention_mask = torch.cat((attention_mask, torch.ones((batch_size, 1), device=attention_mask.device, dtype=attention_mask.dtype)), dim=1)
+                    add_timing(timing_metrics, "cloud_generate_attention_mask_time", time.perf_counter() - attention_mask_start)
 
                 # With KV cache: only process the new token
+                decode_start = time.perf_counter()
                 decode_step_output, kv_cache_list = model.decoder(
                     next_token_embed,
                     attention_mask=attention_mask,
                     kv_cache=kv_cache_list,
-                    start_pos=current_token_start_pos
+                    start_pos=current_token_start_pos,
+                    timing_metrics=timing_metrics
                 )
+                add_timing(timing_metrics, "cloud_generate_decode_step_time", time.perf_counter() - decode_start)
         
                 last_token_output = decode_step_output[:, -1, :] 
                 
                 # Apply head to get logits (if model is in embedding mode)
+                head_start = time.perf_counter()
                 if not model.decoder.lm_use_tokens:
                     current_logits = model.decoder.head(last_token_output)
                 else:
                     current_logits = last_token_output
+                add_timing(timing_metrics, "cloud_generate_head_time", time.perf_counter() - head_start)
             
             if not newly_generated_ids_list: # Handle case where max_new_tokens might be 0
                 return torch.empty((batch_size,0), dtype=torch.long, device=input_ids.device)
 
+            postprocess_start = time.perf_counter()
             generated_ids = torch.cat(newly_generated_ids_list, dim=1)
 
             # Post-process to handle EOS token.
@@ -162,6 +197,7 @@ def generate(model, generations, device, input_ids, token_embd, attention_mask=N
                 generated_ids[replace_mask] = model.tokenizer.eos_token_id
             
             out_text = model.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+            add_timing(timing_metrics, "cloud_generate_postprocess_time", time.perf_counter() - postprocess_start)
             print(f"  >> Generation {i+1}: {out_text}")
             text_list.append(out_text)
 
