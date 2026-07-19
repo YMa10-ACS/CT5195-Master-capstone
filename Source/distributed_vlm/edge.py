@@ -89,6 +89,29 @@ METRICS_COLUMNS = [
     "network_overhead",
     "local_baseline_latency",
     "cloud_total_request",
+    "cloud_reconstruct_time",
+    "cloud_prompt_time",
+    "cloud_combine_time",
+    "cloud_generate_time",
+    "cloud_generate_tokens",
+    "cloud_generate_prefill_time",
+    "cloud_generate_head_time",
+    "cloud_generate_sample_time",
+    "cloud_generate_token_embedding_time",
+    "cloud_generate_attention_mask_time",
+    "cloud_generate_decode_step_time",
+    "cloud_generate_postprocess_time",
+    "cloud_decoder_rotary_embd_time",
+    "cloud_decoder_norm_time",
+    "cloud_decoder_qkv_proj_time",
+    "cloud_decoder_rotary_time",
+    "cloud_decoder_kv_cat_time",
+    "cloud_decoder_kv_repeat_time",
+    "cloud_decoder_attention_mask_time",
+    "cloud_decoder_attention_core_time",
+    "cloud_decoder_out_proj_time",
+    "cloud_decoder_mlp_time",
+    "cloud_decoder_lm_head_time",
     "edge_embedding_cpu_total",
     "edge_embedding_cpu_avg_pct",
     "edge_embedding_cpu_max_pct",
@@ -279,6 +302,7 @@ def transfer_embdding(session, target, transport_protocol,projected, splitted_im
 
     print("status code:", response.status_code)
     result_json = response.json()
+    print("cloud metrics keys:", sorted(result_json.get("metrics", {}).keys()))
     result_list = result_json["result"]
     for i, text in enumerate(result_list, start=1):
         print(f"  >> Generation {i}: {text}")
