@@ -3,10 +3,10 @@ import sys, os, json, time
 import numpy as np
 import torch
 import psutil
-from functools import wraps
 from flask import Flask, request, jsonify
 from vlm import init_tokenizer
 from monitor import ProcessSampler
+from metrics import measure, names as metric_names
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
@@ -19,23 +19,6 @@ print("language_model path:", lm.__file__)
 projected_cache_key = None
 projected_array = None
 projected_cpu_tensor = None
-
-def timed_stage(metric_name):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kargs):
-            start = time.perf_counter()
-            result = func(*args, **kargs)
-            end = time.perf_counter()
-            elapsed = end - start
-
-            metrics = kargs["metrics"]
-            metrics[metric_name] = elapsed
-            print(f"[timing] {metric_name}: {elapsed} seconds")
-
-            return result
-        return wrapper
-    return decorator
 
 def parse_env():
     args = dict()
@@ -69,8 +52,7 @@ def get_projected_buffer(shape, np_dtype):
     return projected_array, projected_cpu_tensor
 
 
-@timed_stage("cloud_reconstruct_time")
-def reconstruct_from_request(device, metrics):
+def reconstruct_from_request(device):
     raw = request.data
     meta_json = request.headers.get("Visual-Meta")
 
@@ -126,8 +108,7 @@ def load_cloud_model(weights, device):
     return model, tokenizer
 
 
-@timed_stage("cloud_prompt_time")
-def get_prompt_tokens(device, prompt, splitted_image_ratio, metrics):
+def get_prompt_tokens(device, prompt, splitted_image_ratio):
     cache_key = (device, prompt, tuple(splitted_image_ratio))
     tokens = prompt_cache.get(cache_key)
     if tokens is None:
@@ -136,12 +117,10 @@ def get_prompt_tokens(device, prompt, splitted_image_ratio, metrics):
     return tokens
 
 
-@timed_stage("cloud_combine_time")
-def combine_projected_with_prompt(tokens, projected, metrics):
+def combine_projected_with_prompt(tokens, projected):
     return combined_image_and_text_message(model, tokens, projected)
 
 
-@timed_stage("cloud_generate_time")
 def generate_from_embedding(generations, device, tokens, token_embd, max_new_tokens, metrics):
     return generate(
                     model,
@@ -165,9 +144,8 @@ def receive_embedding():
     prompt = app.config["prompt"]
     max_new_tokens = app.config["max_new_tokens"]
 
-    projected, splitted_image_ratio, generations = reconstruct_from_request(
-        device, metrics=metrics
-    )
+    with measure(metrics, metric_names.CLOUD_RECONSTRUCT_TIME):
+        projected, splitted_image_ratio, generations = reconstruct_from_request(device)
     print(
         "receive_embedding parameters:\n"
         f"  device: {device}\n"
@@ -177,31 +155,30 @@ def receive_embedding():
         f"  max_new_tokens: {max_new_tokens}\n"
         f"  generations: {generations}"
     )
-    tokens = get_prompt_tokens(
-        device, prompt, splitted_image_ratio, metrics=metrics
-    )
+    with measure(metrics, metric_names.CLOUD_PROMPT_TIME):
+        tokens = get_prompt_tokens(device, prompt, splitted_image_ratio)
 
     with torch.inference_mode():
-        token_embd = combine_projected_with_prompt(
-            tokens, projected, metrics=metrics
-        )
-        text_list = generate_from_embedding(
-            generations,
-            device,
-            tokens,
-            token_embd,
-            max_new_tokens,
-            metrics=metrics,
-        )
+        with measure(metrics, metric_names.CLOUD_COMBINE_TIME):
+            token_embd = combine_projected_with_prompt(tokens, projected)
+        with measure(metrics, metric_names.CLOUD_GENERATE_TIME):
+            text_list = generate_from_embedding(
+                generations,
+                device,
+                tokens,
+                token_embd,
+                max_new_tokens,
+                metrics=metrics,
+            )
     request_end = time.perf_counter()
     cpu_end = cpu_times()
     cloud_cpu_avg_pct, cloud_cpu_max_pct = end_cpu_sampler(cpu_sampler)
 
     metrics.update({
-        "cloud_total_request": request_end - request_start,
-        "cloud_cpu_total": cpu_end - cpu_start,
-        "cloud_cpu_avg_pct": cloud_cpu_avg_pct,
-        "cloud_cpu_max_pct": cloud_cpu_max_pct,
+        metric_names.CLOUD_TOTAL_REQUEST: request_end - request_start,
+        metric_names.CLOUD_CPU_TOTAL: cpu_end - cpu_start,
+        metric_names.CLOUD_CPU_AVG_PCT: cloud_cpu_avg_pct,
+        metric_names.CLOUD_CPU_MAX_PCT: cloud_cpu_max_pct,
     })
     return jsonify({"result": text_list, "metrics": metrics})
 

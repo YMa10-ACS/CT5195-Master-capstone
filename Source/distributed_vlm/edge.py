@@ -11,8 +11,6 @@ import requests
 
 from PIL import Image
 import argparse
-import csv
-import json
 import psutil
 
 import time
@@ -31,6 +29,9 @@ from data.processors import get_tokenizer
 from monitor import ProcessSampler
 from vlm import load_model, init_image_processor, init_tokenizer
 from vlm import construct_prompt, combined_image_and_text_message, generate
+from metrics import names as metric_names
+from metrics import write_metrics_csv, write_throughput_csv
+from transfer import transfer_embedding
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -78,61 +79,6 @@ def parse_args():
 
     return args
 
-METRICS_COLUMNS = [
-    "timestamp",
-    "image",
-    "transport",
-    "payload_bytes",
-    "split_latency",
-    "edge_embedding_latency",
-    "transfer_latency",
-    "network_overhead",
-    "local_baseline_latency",
-    "cloud_total_request",
-    "cloud_reconstruct_time",
-    "cloud_prompt_time",
-    "cloud_combine_time",
-    "cloud_generate_time",
-    "cloud_generate_tokens",
-    "cloud_generate_prefill_time",
-    "cloud_generate_head_time",
-    "cloud_generate_sample_time",
-    "cloud_generate_token_embedding_time",
-    "cloud_generate_attention_mask_time",
-    "cloud_generate_decode_step_time",
-    "cloud_generate_postprocess_time",
-    "cloud_decoder_rotary_embd_time",
-    "cloud_decoder_norm_time",
-    "cloud_decoder_qkv_proj_time",
-    "cloud_decoder_rotary_time",
-    "cloud_decoder_kv_cat_time",
-    "cloud_decoder_kv_repeat_time",
-    "cloud_decoder_attention_mask_time",
-    "cloud_decoder_attention_core_time",
-    "cloud_decoder_out_proj_time",
-    "cloud_decoder_mlp_time",
-    "cloud_decoder_lm_head_time",
-    "edge_embedding_cpu_total",
-    "edge_embedding_cpu_avg_pct",
-    "edge_embedding_cpu_max_pct",
-    "edge_transfer_cpu_total",
-    "local_baseline_cpu_total",
-    "edge_generate_cpu_avg_pct",
-    "edge_generate_cpu_max_pct",
-    "cloud_cpu_total",
-    "cloud_cpu_avg_pct",
-    "cloud_cpu_max_pct",
-]
-
-THROUGHPUT_COLUMNS = [
-    "transport",
-    "split",
-    "target",
-    "image_count",
-    "batch_total_seconds",
-    "throughput_images_per_minute",
-]
-
 def cpu_times():
     times = psutil.Process(os.getpid()).cpu_times()
     return times.user + times.system
@@ -150,40 +96,6 @@ def end_cpu_sampler(sampler):
     cpu_avg_pct = sum(cpu_samples) / len(cpu_samples) if cpu_samples else 0.0
     cpu_max_pct = max(cpu_samples) if cpu_samples else 0.0
     return cpu_avg_pct, cpu_max_pct
-
-def write_metrics_csv(path, row):
-    parent_dir = os.path.dirname(path)
-    if parent_dir:
-        os.makedirs(parent_dir, exist_ok=True)
-    file_exists = os.path.exists(path)
-    with open(path, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=METRICS_COLUMNS)
-        if not file_exists or os.path.getsize(path) == 0:
-            writer.writeheader()
-        writer.writerow({column: row.get(column, "") for column in METRICS_COLUMNS})
-
-def write_throughput_csv(path, row):
-    if not path:
-        return
-
-    parent_dir = os.path.dirname(path)
-    if parent_dir:
-        os.makedirs(parent_dir, exist_ok=True)
-    file_exists = os.path.exists(path)
-    with open(path, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=THROUGHPUT_COLUMNS)
-        if not file_exists or os.path.getsize(path) == 0:
-            writer.writeheader()
-        writer.writerow({column: row.get(column, "") for column in THROUGHPUT_COLUMNS})
-
-def target_url_for_transport(target, transport_protocol):
-    if transport_protocol == "http":
-        return f"http://{target}:8000"
-    if transport_protocol == "https-aes-gcm":
-        return f"https://{target}:8443"
-    if transport_protocol == "https-chacha20":
-        return f"https://{target}:8444"
-    raise ValueError(f"Unsupported transport protocol: {transport_protocol}")
 
 def collect_images(image_dir, max_images):
     image_paths = []
@@ -264,59 +176,6 @@ def generate_embedding(processed_image, model, device):
 
     return projected
 
-def transfer_embdding(session, target, transport_protocol,projected, splitted_image_ratio, prompt, generations):
-    transfer_cpu_start = cpu_times()
-
-    # 5) Transfer embedding
-    data = projected.detach().cpu().numpy()
-    print("data type:", type(data))
-    print("data shape: ", data.shape)
-    print("data dtype: ", data.dtype)
-    metadata = {
-        "shape" : list(data.shape),
-        "dtype" : str(data.dtype),
-        "prompt": str(prompt),
-        "splitted_image_ratio": list(splitted_image_ratio),
-        "generations": int(generations)
-    }
-
-    payload = data.tobytes()
-
-    target_url = target_url_for_transport(target, transport_protocol)
-    print(f"target_url: {target_url}")
-    transfer_start = time.perf_counter()
-    if transport_protocol == "http":
-        response = session.post(
-            target_url,
-            data=payload,
-            headers={"Visual-Meta": json.dumps(metadata)}
-        )
-    else:
-        response = session.post(
-            target_url,
-            data=payload,
-            headers={"Visual-Meta": json.dumps(metadata)},
-            verify=False
-        )
-    transfer_end = time.perf_counter()
-
-    print("status code:", response.status_code)
-    result_json = response.json()
-    print("cloud metrics keys:", sorted(result_json.get("metrics", {}).keys()))
-    result_list = result_json["result"]
-    for i, text in enumerate(result_list, start=1):
-        print(f"  >> Generation {i}: {text}")
-
-    metrics = {
-        "payload_bytes": len(payload),
-        "transfer_latency": transfer_end - transfer_start,
-    }
-    metrics.update(result_json.get("metrics", {}))
-    metrics["network_overhead"] = metrics["transfer_latency"] - metrics["cloud_total_request"]
-    transfer_cpu_end = cpu_times()
-    metrics["edge_transfer_cpu_total"] = transfer_cpu_end - transfer_cpu_start
-    return result_list, metrics
-
 def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokonizer, generations, max_new_tokens) :
     
     # Print generate_text_by_embedding parameters for comparison with the cloud service.
@@ -351,9 +210,9 @@ def process_image(args, session, image_path, model, image_processor, text_tokoni
     result_list = []
     nanovlm_list = []
     metrics = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "image": image_path,
-        "transport": args.transport,
+        metric_names.TIMESTAMP: datetime.now(timezone.utc).isoformat(),
+        metric_names.IMAGE: image_path,
+        metric_names.TRANSPORT: args.transport,
     }
 
     # Start CPU sampler to measure CPU usage during embedding generation
@@ -369,17 +228,17 @@ def process_image(args, session, image_path, model, image_processor, text_tokoni
     embedding_end = time.perf_counter()
     embedding_cpu_end = cpu_times()
     print(f"[timeing] generate_embedding: {embedding_end - embedding_start} seconds")
-    metrics["edge_embedding_latency"] = embedding_end - embedding_start
-    metrics["edge_embedding_cpu_total"] = embedding_cpu_end - embedding_cpu_start
+    metrics[metric_names.EDGE_EMBEDDING_LATENCY] = embedding_end - embedding_start
+    metrics[metric_names.EDGE_EMBEDDING_CPU_TOTAL] = embedding_cpu_end - embedding_cpu_start
 
     edge_embedding_cpu_avg_pct, edge_embedding_cpu_max_pct = end_cpu_sampler(edge_embedding_cpu_sampler)
-    metrics["edge_embedding_cpu_avg_pct"] = edge_embedding_cpu_avg_pct
-    metrics["edge_embedding_cpu_max_pct"] = edge_embedding_cpu_max_pct
+    metrics[metric_names.EDGE_EMBEDDING_CPU_AVG_PCT] = edge_embedding_cpu_avg_pct
+    metrics[metric_names.EDGE_EMBEDDING_CPU_MAX_PCT] = edge_embedding_cpu_max_pct
 
     if args.split == "split" or args.split == "both":
-        result_list, transfer_metrics = transfer_embdding(session, args.target, args.transport, projected, splitted_image_ratio, args.prompt, args.generations)
+        result_list, transfer_metrics = transfer_embedding(session, args.target, args.transport, projected, splitted_image_ratio, args.prompt, args.generations)
         split_end = time.perf_counter()
-        metrics["split_latency"] = split_end - split_start
+        metrics[metric_names.SPLIT_LATENCY] = split_end - split_start
         metrics.update(transfer_metrics)
     
 
@@ -392,12 +251,12 @@ def process_image(args, session, image_path, model, image_processor, text_tokoni
         
         local_generate_cpu_end = cpu_times()
         local_generate_end = time.perf_counter()
-        metrics["local_baseline_latency"] = local_generate_end - local_generate_start
-        metrics["local_baseline_cpu_total"] = local_generate_cpu_end - local_generate_cpu_start
+        metrics[metric_names.LOCAL_BASELINE_LATENCY] = local_generate_end - local_generate_start
+        metrics[metric_names.LOCAL_BASELINE_CPU_TOTAL] = local_generate_cpu_end - local_generate_cpu_start
         
         edge_generate_cpu_avg_pct, edge_generate_cpu_max_pct = end_cpu_sampler(edge_generate_cpu_sampler)
-        metrics["edge_generate_cpu_avg_pct"] = edge_generate_cpu_avg_pct
-        metrics["edge_generate_cpu_max_pct"] = edge_generate_cpu_max_pct
+        metrics[metric_names.EDGE_GENERATE_CPU_AVG_PCT] = edge_generate_cpu_avg_pct
+        metrics[metric_names.EDGE_GENERATE_CPU_MAX_PCT] = edge_generate_cpu_max_pct
     
     write_metrics_csv(args.metrics_csv, metrics)
 
@@ -444,12 +303,12 @@ def main():
     print(f"throughput total seconds: {batch_total}")
     print(f"throughput images per minute: {throughput_images_per_min}")
     write_throughput_csv(args.throughput_csv, {
-        "transport": args.transport,
-        "split": args.split,
-        "target": args.target,
-        "image_count": len(images),
-        "batch_total_seconds": batch_total,
-        "throughput_images_per_minute": throughput_images_per_min,
+        metric_names.TRANSPORT: args.transport,
+        metric_names.SPLIT: args.split,
+        metric_names.TARGET: args.target,
+        metric_names.IMAGE_COUNT: len(images),
+        metric_names.BATCH_TOTAL_SECONDS: batch_total,
+        metric_names.THROUGHPUT_IMAGES_PER_MINUTE: throughput_images_per_min,
     })
 
 if __name__ == "__main__":
