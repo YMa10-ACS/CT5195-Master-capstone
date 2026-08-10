@@ -13,14 +13,17 @@ CLOUD_HOST="${CLOUD_HOST:-0.0.0.0}"
 HTTP_MODE="${1:-${HTTP_MODE:-https-aes-gcm}}"
 
 
-if [ "$HTTP_MODE" == "http" ]; then
-	PORT=8000
-elif [ "$HTTP_MODE" == "https-chacha20" ]; then
-	PORT=8444
-	CIPHER="ECDHE-RSA-CHACHA20-POLY1305"
-else 
-	PORT=8443
-	CIPHER="ECDHE-RSA-AES128-GCM-SHA256"
+if [ "$HTTP_MODE" = "http" ]; then
+  PORT=8000
+elif [ "$HTTP_MODE" = "https-aes-gcm" ]; then
+  PORT=8443
+  OPENSSL_CONFIG="$ROOT/openssl_tls13_aes.cnf"
+elif [ "$HTTP_MODE" = "https-chacha20" ]; then
+  PORT=8444
+  OPENSSL_CONFIG="$ROOT/openssl_tls13_chacha20.cnf"
+else
+  echo "Unsupported cloud mode: $HTTP_MODE" >&2
+  exit 1
 fi
 
 mkdir -p "$ROOT/record"
@@ -37,12 +40,12 @@ if [ "$HTTP_MODE" == "http" ]; then
     "cloud:create_app()" \
     2>&1 | tee "$CLOUD_LOG" &
 else
-  gunicorn -k gthread -w 1 --threads 1 \
+  env OPENSSL_CONF="$OPENSSL_CONFIG" \
+    gunicorn -k gthread -w 1 --threads 1 \
     --keep-alive 30 \
-    -b ${CLOUD_HOST}:${PORT} \
+    -b "${CLOUD_HOST}:${PORT}" \
     --certfile ../cert/cert.pem \
     --keyfile ../cert/key.pem \
-    --ciphers ${CIPHER} \
     "cloud:create_app()" \
     2>&1 | tee "$CLOUD_LOG" &
 fi
