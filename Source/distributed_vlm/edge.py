@@ -7,7 +7,6 @@ Author: Yaoquan Ma
 
 
 import torch
-import requests
 
 from PIL import Image
 import argparse
@@ -31,7 +30,7 @@ from vlm import load_model, init_image_processor, init_tokenizer
 from vlm import construct_prompt, combined_image_and_text_message, generate
 from metrics import names as metric_names
 from metrics import write_metrics_csv, write_throughput_csv
-from transfer import transfer_embedding
+from transfer import EmbeddingTransferClient, TransferError
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -206,7 +205,7 @@ def generate_text_by_embedding(model, device, projected, splitted_image_ratio, p
             )
     return text_list
 
-def process_image(args, session, image_path, model, image_processor, text_tokonizer):
+def process_image(args, transfer_client, image_path, model, image_processor, text_tokonizer):
     result_list = []
     nanovlm_list = []
     metrics = {
@@ -218,11 +217,10 @@ def process_image(args, session, image_path, model, image_processor, text_tokoni
     # Start CPU sampler to measure CPU usage during embedding generation
     edge_embedding_cpu_sampler = start_cpu_sampler(interval=0.5)
 
-    split_start = time.perf_counter()
-    embedding_cpu_start = cpu_times()
     processed_image, splitted_image_ratio = image_preprocessing(image_path, model, image_processor)
 
     # Start recording the time taken to generate the embedding for the processed image.
+    embedding_cpu_start = cpu_times()
     embedding_start = time.perf_counter()
     projected = generate_embedding(processed_image, model, args.device)
     embedding_end = time.perf_counter()
@@ -235,22 +233,35 @@ def process_image(args, session, image_path, model, image_processor, text_tokoni
     metrics[metric_names.EDGE_EMBEDDING_CPU_AVG_PCT] = edge_embedding_cpu_avg_pct
     metrics[metric_names.EDGE_EMBEDDING_CPU_MAX_PCT] = edge_embedding_cpu_max_pct
 
+    split_start = time.perf_counter()
     if args.split == "split" or args.split == "both":
-        result_list, transfer_metrics = transfer_embedding(session, args.target, args.transport, projected, splitted_image_ratio, args.prompt, args.generations)
+        try:
+            result_list, transfer_metrics = transfer_client.transfer(
+                projected,
+                splitted_image_ratio,
+                args.prompt,
+                args.generations,
+            )
+        except TransferError as error:
+            raise RuntimeError(
+                f"Unable to complete {args.transport} transfer for {image_path}: {error}"
+            ) from error
         split_end = time.perf_counter()
         metrics[metric_names.SPLIT_LATENCY] = split_end - split_start
+
         metrics.update(transfer_metrics)
     
 
     if args.split == "local" or args.split == "both":
         # Start CPU sampler to measure CPU usage during embedding generation
         edge_generate_cpu_sampler = start_cpu_sampler(interval=0.5)
-        local_generate_start = time.perf_counter()
         local_generate_cpu_start = cpu_times()
+        local_generate_start = time.perf_counter()
         nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
         
-        local_generate_cpu_end = cpu_times()
         local_generate_end = time.perf_counter()
+        local_generate_cpu_end = cpu_times()
+
         metrics[metric_names.LOCAL_BASELINE_LATENCY] = local_generate_end - local_generate_start
         metrics[metric_names.LOCAL_BASELINE_CPU_TOTAL] = local_generate_cpu_end - local_generate_cpu_start
         
@@ -290,11 +301,12 @@ def main():
         images = collect_images(args.image_dir, args.max_images)
         print(f"collect {len(images)} images from {args.image_dir}")
 
-    with requests.Session() as session:
+    with EmbeddingTransferClient(args.target, args.transport) as transfer_client:
+        transfer_client.attest()
         batch_start = time.perf_counter()
         for index, image_path in enumerate(images, start=1):
             print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")
-            process_image(args, session, image_path, model, image_processor, text_tokonizer)
+            process_image(args, transfer_client, image_path, model, image_processor, text_tokonizer)
         batch_end = time.perf_counter()
 
     batch_total = batch_end - batch_start
