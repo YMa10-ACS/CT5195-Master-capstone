@@ -33,12 +33,19 @@ class TransferError(RuntimeError):
 class EmbeddingTransferClient:
     """Reuse one HTTP session for all embedding transfers in a batch."""
 
-    def __init__(self, target, transport_protocol):
+    def __init__(self, target, transport_protocol, ca_cert=None):
         _target_url_for_transport(target, transport_protocol)
+        self.ca_cert = ca_cert
+
         self.target = target
         self.transport_protocol = transport_protocol
         self.session = requests.Session()
         self.attested = False
+
+    def _request_verify(self):
+        if self.transport_protocol == "http":
+            return None
+        return self.ca_cert or False
 
     def attest(self):
         """Request and verify fresh attestation evidence over this session."""
@@ -51,7 +58,7 @@ class EmbeddingTransferClient:
         attestation_url = f"{target_url}/attestation"
         request_kwargs = {"json": challenge}
         if self.transport_protocol != "http":
-            request_kwargs["verify"] = False
+            request_kwargs["verify"] = self._request_verify()
 
         try:
             response = self.session.post(attestation_url, **request_kwargs)
