@@ -2,11 +2,9 @@
 import sys, os, json, time
 import numpy as np
 import torch
-import psutil
 from flask import Flask, request, jsonify
 from vlm import init_tokenizer
-from monitor import ProcessSampler
-from metrics import measure, names as metric_names
+from metrics import MetricsRecorder, names as metric_names
 from attestation import AttestationError, create_evidence, is_attestation_enabled
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -73,22 +71,6 @@ def reconstruct_from_request(device):
     projected = projected_cpu if device == "cpu" else projected_cpu.to(device)
     return projected, splitted_image_ratio, generations
 
-def cpu_times():
-    times = psutil.Process(os.getpid()).cpu_times()
-    return times.user + times.system
-
-def start_cpu_sampler(interval=0.5):
-    sampler = ProcessSampler(pid=os.getpid(), interval=interval)
-    sampler.start()
-    return sampler
-
-def end_cpu_sampler(sampler):
-    sampler.stop()
-    cpu_samples = [cpu for cpu, _ in sampler.samples]
-    cpu_avg_pct = sum(cpu_samples) / len(cpu_samples) if cpu_samples else 0.0
-    cpu_max_pct = max(cpu_samples) if cpu_samples else 0.0
-    return cpu_avg_pct, cpu_max_pct
-
 app = Flask(__name__)
 model = None
 tokenizer = None
@@ -152,16 +134,19 @@ def generate_from_embedding(generations, device, tokens, token_embd, max_new_tok
 
 @app.route("/", methods=["POST"])
 def receive_embedding():
-    request_start = time.perf_counter()
-    cpu_start = cpu_times()
-    cpu_sampler = start_cpu_sampler(interval=0.5)
-    metrics = {}
+    metrics = MetricsRecorder()
+    metrics.start_counter(metric_names.CLOUD_TOTAL_REQUEST)
+    metrics.start_cpu_counter(metric_names.CLOUD_CPU_TOTAL)
+    metrics.start_cpu_sampling("cloud_request", interval=0.5)
+
     device = app.config["device"]
     prompt = app.config["prompt"]
     max_new_tokens = app.config["max_new_tokens"]
 
-    with measure(metrics, metric_names.CLOUD_RECONSTRUCT_TIME):
-        projected, splitted_image_ratio, generations = reconstruct_from_request(device)
+    metrics.start_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
+    projected, splitted_image_ratio, generations = reconstruct_from_request(device)
+    metrics.stop_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
+
     app.logger.info(
         "receive_embedding parameters:\n"
         f"  device: {device}\n"
@@ -171,32 +156,36 @@ def receive_embedding():
         f"  max_new_tokens: {max_new_tokens}\n"
         f"  generations: {generations}"
     )
-    with measure(metrics, metric_names.CLOUD_PROMPT_TIME):
-        tokens = get_prompt_tokens(device, prompt, splitted_image_ratio)
+
+    metrics.start_counter(metric_names.CLOUD_PROMPT_TIME)
+    tokens = get_prompt_tokens(device, prompt, splitted_image_ratio)
+    metrics.stop_counter(metric_names.CLOUD_PROMPT_TIME)
 
     with torch.inference_mode():
-        with measure(metrics, metric_names.CLOUD_COMBINE_TIME):
-            token_embd = combine_projected_with_prompt(tokens, projected)
-        with measure(metrics, metric_names.CLOUD_GENERATE_TIME):
-            text_list = generate_from_embedding(
-                generations,
-                device,
-                tokens,
-                token_embd,
-                max_new_tokens,
-                metrics=metrics,
-            )
-    request_end = time.perf_counter()
-    cpu_end = cpu_times()
-    cloud_cpu_avg_pct, cloud_cpu_max_pct = end_cpu_sampler(cpu_sampler)
+        metrics.start_counter(metric_names.CLOUD_COMBINE_TIME)
+        token_embd = combine_projected_with_prompt(tokens, projected)
+        metrics.stop_counter(metric_names.CLOUD_COMBINE_TIME)
 
-    metrics.update({
-        metric_names.CLOUD_TOTAL_REQUEST: request_end - request_start,
-        metric_names.CLOUD_CPU_TOTAL: cpu_end - cpu_start,
-        metric_names.CLOUD_CPU_AVG_PCT: cloud_cpu_avg_pct,
-        metric_names.CLOUD_CPU_MAX_PCT: cloud_cpu_max_pct,
-    })
-    return jsonify({"result": text_list, "metrics": metrics})
+        metrics.start_counter(metric_names.CLOUD_GENERATE_TIME)
+        text_list = generate_from_embedding(
+            generations,
+            device,
+            tokens,
+            token_embd,
+            max_new_tokens,
+            metrics=metrics,
+        )
+        metrics.stop_counter(metric_names.CLOUD_GENERATE_TIME)
+
+    metrics.stop_cpu_counter(metric_names.CLOUD_CPU_TOTAL)
+    metrics.stop_cpu_sampling(
+        "cloud_request",
+        metric_names.CLOUD_CPU_AVG_PCT,
+        metric_names.CLOUD_CPU_MAX_PCT,
+    )
+    metrics.stop_counter(metric_names.CLOUD_TOTAL_REQUEST)
+
+    return jsonify({"result": text_list, "metrics": metrics.row()})
 
 def create_app():
     app_name = os.path.basename(__file__)

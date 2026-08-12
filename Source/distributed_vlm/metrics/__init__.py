@@ -2,12 +2,10 @@
 
 from . import names
 from .csv_writer import write_metrics_csv, write_throughput_csv
-from .timing import add_count, add_timing, measure
+from .recorder import MetricsRecorder
 
 __all__ = [
-    "add_count",
-    "add_timing",
-    "measure",
+    "MetricsRecorder",
     "names",
     "write_metrics_csv",
     "write_throughput_csv",

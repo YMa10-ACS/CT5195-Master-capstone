@@ -18,7 +18,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 ATTESTATION_VERSION = 1
-
 ATTESTATION = os.getenv("ATTESTATION", "enabled").lower()
 
 
