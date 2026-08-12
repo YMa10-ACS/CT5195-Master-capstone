@@ -175,9 +175,8 @@ def transfer_embedding(
     request_kwargs = {
         "data": payload,
         "headers": {"Visual-Meta": json.dumps(metadata)},
+        "verify": session.verify
     }
-    if transport_protocol != "http":
-        request_kwargs["verify"] = False
 
     transfer_start = time.perf_counter()
     transfer_cpu_start = _cpu_times()

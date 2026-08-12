@@ -302,7 +302,7 @@ def main():
         images = collect_images(args.image_dir, args.max_images)
         print(f"collect {len(images)} images from {args.image_dir}")
 
-    with EmbeddingTransferClient(args.target, args.transport) as transfer_client:
+    with EmbeddingTransferClient(args.target, args.transport, args.ca_cert) as transfer_client:
         if args.split != "local" and is_attestation_enabled():
             transfer_client.attest()
         batch_start = time.perf_counter()
