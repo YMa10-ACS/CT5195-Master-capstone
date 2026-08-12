@@ -7,6 +7,7 @@
 set -e
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
+TDX_ATTESTATION_PATH="${ROOT}/tdx_attest"
 CLOUD_NO_TDX_TARGET="10.128.0.7"
 CLOUD_TDX_TARGET="10.128.0.6"
 MODES="http https-aes-gcm https-chacha20"
@@ -45,11 +46,12 @@ rename_records_for_target() {
 
 run_split_inference() {
   target="$1"
+  attestation="$2"
   clear_current_records
 
   for mode in $MODES; do
-    echo "===== Running mode: $mode $split target: $target ====="
-    bash run_edge_comparison.sh "$mode" "$target" "split"
+    echo "===== Running mode: $mode split target: $target attestation: $attestation ====="
+    ATTESTATION="$attestation" bash run_edge_comparison.sh "$mode" "$target" "split"
   done
 
   rename_records_for_target "$target"
@@ -62,10 +64,16 @@ run_local_inference() {
   rename_records_for_target "local"
 }
 
+build_tdx_attestation() {
+  (cd "$TDX_ATTESTATION_PATH" && ./build.sh)
+}
+
 
 cd "$ROOT"
 
-run_split_inference "$CLOUD_NO_TDX_TARGET"
-run_split_inference "$CLOUD_TDX_TARGET"
+build_tdx_attestation
+
+run_split_inference "$CLOUD_NO_TDX_TARGET" disabled
+run_split_inference "$CLOUD_TDX_TARGET" enabled
 
 run_local_inference
