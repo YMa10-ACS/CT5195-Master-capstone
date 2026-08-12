@@ -24,6 +24,18 @@ class MetricsRecorder:
         if values:
             self.values.update(values)
 
+    def get(self, name, default=None):
+        return self.values.get(name, default)
+
+    def __getitem__(self, name):
+        return self.values[name]
+
+    def __setitem__(self, name, value):
+        self.values[name] = value
+
+    def __contains__(self, name):
+        return name in self.values
+
     def start_counter(self, name):
         self._counters[name] = time.perf_counter()
 
