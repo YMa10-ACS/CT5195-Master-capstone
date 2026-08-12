@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify
 from vlm import init_tokenizer
 from monitor import ProcessSampler
 from metrics import measure, names as metric_names
-from attestation import AttestationError, create_evidence
+from attestation import AttestationError, create_evidence, is_attestation_enabled
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
@@ -97,6 +97,10 @@ prompt_cache = {}
 
 @app.route("/attestation", methods=["POST"])
 def attestation():
+    if not is_attestation_enabled():
+        app.logger.warning("Rejected attestation request because ATTESTATION=disabled")
+        return jsonify({"error": "Attestation is disabled"}), 404
+
     app.logger.info("Received attestation request")
     try:
         evidence = create_evidence(request.get_json(silent=False))

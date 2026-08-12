@@ -18,6 +18,7 @@ from attestation import (
     AttestationError,
     create_challenge,
     encode_challenge,
+    is_attestation_enabled,
     verify_evidence,
 )
 from metrics import names as metric_names
@@ -79,7 +80,7 @@ class EmbeddingTransferClient:
         return True
 
     def transfer(self, projected, splitted_image_ratio, prompt, generations):
-        if not self.attested:
+        if is_attestation_enabled() and not self.attested:
             raise TransferError("Remote attestation must succeed before transfer")
         return transfer_embedding(
             self.session,

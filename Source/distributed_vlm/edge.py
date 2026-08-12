@@ -30,6 +30,7 @@ from vlm import load_model, init_image_processor, init_tokenizer
 from vlm import construct_prompt, combined_image_and_text_message, generate
 from metrics import names as metric_names
 from metrics import write_metrics_csv, write_throughput_csv
+from attestation import is_attestation_enabled
 from transfer import EmbeddingTransferClient, TransferError
 
 def parse_args():
@@ -302,7 +303,8 @@ def main():
         print(f"collect {len(images)} images from {args.image_dir}")
 
     with EmbeddingTransferClient(args.target, args.transport) as transfer_client:
-        transfer_client.attest()
+        if args.split != "local" and is_attestation_enabled():
+            transfer_client.attest()
         batch_start = time.perf_counter()
         for index, image_path in enumerate(images, start=1):
             print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")

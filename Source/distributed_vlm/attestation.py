@@ -18,11 +18,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 ATTESTATION_VERSION = 1
+
+ATTESTATION = os.getenv("ATTESTATION", "enabled").lower()
+
+
+
 NONCE_SIZE = 64
 TDX_HELPER_ENV = "TDX_ATTEST_HELPER"
 TDX_HELPER_DEFAULT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "tdx_attest", "tdx-attest"
 )
+
+def is_attestation_enabled() -> bool:
+    if ATTESTATION not in {"enabled", "disabled"}:
+        raise ValueError(
+            f"Invalid ATTESTATION={ATTESTATION!r}; expected 'enabled' or 'disabled'"
+        )
+    return ATTESTATION == "enabled"
 
 
 class AttestationError(RuntimeError):
