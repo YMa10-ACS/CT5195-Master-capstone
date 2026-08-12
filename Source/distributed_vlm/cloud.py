@@ -15,7 +15,6 @@ sys.path.insert(0, PROJECT_ROOT)
 import nanoVLM.models.language_model as lm
 from vlm import load_model, combined_image_and_text_message, construct_prompt, generate
 
-print("language_model path:", lm.__file__)
 
 projected_cache_key = None
 projected_array = None
@@ -44,7 +43,7 @@ def get_projected_buffer(shape, np_dtype):
         projected_cache_key = cache_key
         projected_array = np.empty(shape, dtype=np_dtype)
         projected_cpu_tensor = torch.from_numpy(projected_array).reshape(projected_shape)
-        print(
+        app.logger.info(
             "allocated projected buffer:\n"
             f"  shape: {shape}\n"
             f"  dtype: {np.dtype(np_dtype)}"
@@ -68,8 +67,8 @@ def reconstruct_from_request(device):
     data, projected_cpu = get_projected_buffer(shape, np_dtype)
     np.copyto(data, raw_view)
 
-    print(f"data = {data.shape}")
-    print(f"data dtype: {data.dtype}")
+    app.logger.info(f"data = {data.shape}")
+    app.logger.info(f"data dtype: {data.dtype}")
 
     projected = projected_cpu if device == "cpu" else projected_cpu.to(device)
     return projected, splitted_image_ratio, generations
@@ -98,10 +97,12 @@ prompt_cache = {}
 
 @app.route("/attestation", methods=["POST"])
 def attestation():
+    app.logger.info("Received attestation request")
     try:
         evidence = create_evidence(request.get_json(silent=False))
-        
+        app.logger.info("Attestation evidence created successfully")
     except AttestationError as error:
+        app.logger.error(f"Error creating attestation evidence: {error}")
         return jsonify({"error": str(error)}), 400
     return jsonify(evidence)
 
@@ -114,7 +115,7 @@ def load_cloud_model(weights, device):
         model = load_model(weights, device)
         tokenizer = init_tokenizer(model)
         load_end = time.perf_counter()
-        print(f"cloud model loaded in {load_end - load_start:.3f} seconds")
+        app.logger.info(f"cloud model loaded in {load_end - load_start:.3f} seconds")
 
     return model, tokenizer
 
@@ -157,7 +158,7 @@ def receive_embedding():
 
     with measure(metrics, metric_names.CLOUD_RECONSTRUCT_TIME):
         projected, splitted_image_ratio, generations = reconstruct_from_request(device)
-    print(
+    app.logger.info(
         "receive_embedding parameters:\n"
         f"  device: {device}\n"
         f"  prompt: {prompt}\n"
@@ -195,7 +196,7 @@ def receive_embedding():
 
 def create_app():
     app_name = os.path.basename(__file__)
-    print(f"{app_name} startup...")
+    app.logger.info(f"{app_name} startup...")
     args = parse_env()
 
     torch.manual_seed(0)
@@ -209,4 +210,5 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
+    app.logger.info("language_model path: {}".format(lm.__file__))
     app.run(host="0.0.0.0", port=8000, threaded=False)

@@ -43,6 +43,9 @@ class EmbeddingTransferClient:
         """Request and verify fresh attestation evidence over this session."""
         nonce = create_challenge()
         challenge = encode_challenge(nonce)
+        # Print the nonce in hex format for easier debugging and logging.
+        print(f"Requesting attestation from {self.target} with nonce {nonce.hex()}")
+
         target_url = _target_url_for_transport(self.target, self.transport_protocol)
         attestation_url = f"{target_url}/attestation"
         request_kwargs = {"json": challenge}
@@ -53,6 +56,9 @@ class EmbeddingTransferClient:
             response = self.session.post(attestation_url, **request_kwargs)
             response.raise_for_status()
             evidence = response.json()
+
+            # Print the evidence in JSON format for easier debugging and logging.
+            print(f"Received attestation evidence: {json.dumps(evidence)}")
         except ValueError as error:
             raise AttestationError(
                 "Cloud attestation response is not valid JSON"
@@ -63,6 +69,12 @@ class EmbeddingTransferClient:
             ) from error
 
         self.attested = verify_evidence(evidence, nonce)
+
+        # Print the attestation result for easier debugging and logging.
+        if self.attested:
+            print(f"Attestation succeeded for {self.target}")
+        else:
+            print(f"Attestation failed for {self.target}")
 
         return True
 

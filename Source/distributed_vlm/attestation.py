@@ -13,7 +13,9 @@ import json
 import os
 import secrets
 import subprocess
+import logging
 
+logger = logging.getLogger(__name__)
 
 ATTESTATION_VERSION = 1
 NONCE_SIZE = 64
@@ -50,6 +52,11 @@ def create_challenge():
 
 def _run_tdx_helper(command, payload):
     helper_path = os.environ.get(TDX_HELPER_ENV, TDX_HELPER_DEFAULT)
+
+    # Print the command and payload for easier debugging and logging.
+    logger.info(f"Running TDX attestation helper: {helper_path} {command}")
+    logger.info(f"Sending payload: {json.dumps(payload)}")
+
     try:
         completed = subprocess.run(
             [helper_path, command],
@@ -156,6 +163,9 @@ def create_evidence(challenge):
 
 def verify_evidence(evidence, expected_nonce):
     """Edge entry point: verify a TDX quote and its nonce binding."""
+
+    # Print the expected nonce in hex format for easier debugging and logging.
+    logger.info(f"Verifying attestation evidence with expected nonce {expected_nonce.hex()}")
     
     if not isinstance(expected_nonce, bytes) or len(expected_nonce) != NONCE_SIZE:
         raise AttestationError("Expected nonce must be exactly 64 bytes")
@@ -174,8 +184,12 @@ def verify_evidence(evidence, expected_nonce):
         verified = verify_tdx_quote(quote, expected_nonce)
     except Exception as error:
         raise AttestationError(f"TDX quote verification failed: {error}") from error
-    
+
+    # Print the verification result for easier debugging and logging.
     if verified is not True:
+        logger.error(f"Attestation verification failed for {expected_nonce.hex()}")
         raise AttestationError("TDX quote verification failed")
+    else:
+        logger.info(f"Attestation verification succeeded for {expected_nonce.hex()}")
 
     return True
