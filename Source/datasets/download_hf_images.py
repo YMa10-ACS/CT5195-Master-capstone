@@ -20,11 +20,9 @@ def parse_args():
     parser.add_argument("--dataset", default="HuggingFaceM4/the_cauldron")
     parser.add_argument("--name", default="ai2d", help="Dataset config/subset name.")
     parser.add_argument("--split", default="train") # Use train sub dataset
-    parser.add_argument("--output-prefix", default="./")
+    parser.add_argument("--prefix", default="./")
     parser.add_argument("--limit", type=int, default=20)
     parser.add_argument("--max-samples", type=int, default=1000)
-    parser.add_argument("--streaming", action=argparse.BooleanOptionalAction, default=False)
-    parser.add_argument("--image-column", default="images")
     return parser.parse_args()
 
 
@@ -50,7 +48,7 @@ def main():
     args = parse_args()
 
     # Convert output parameter into an absolute path.
-    output_dir = (Path(args.output_prefix) / args.name).resolve()
+    output_dir = (Path(args.prefix) / args.name).resolve()
     print(f"Download image into directory: {output_dir}")
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -58,8 +56,7 @@ def main():
         args.dataset,
         args.name,
         split=args.split,
-        # Enable --streaming only for very large datasets when full caching is undesirable.
-        streaming=args.streaming,
+        streaming=False,
     )
 
     saved = 0
@@ -70,7 +67,7 @@ def main():
             break
         scanned = sample_index + 1
 
-        for image_index, image in enumerate(iter_images(sample.get(args.image_column))):
+        for image_index, image in enumerate(iter_images(sample.get("images"))):
             path = output_dir / f"{sample_index:06d}_{image_index:02d}.jpg"
             if save_image(image, path):
                 saved += 1
