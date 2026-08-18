@@ -58,7 +58,7 @@ def parse_args():
     parser.add_argument("--weights", default="lusxvr/nanoVLM-230M-8k")
     parser.add_argument("--transport", choices=["http", "https-aes-gcm", "https-chacha20"], default="http",
                         help="Transport protocol used to send visual embeddings")
-    parser.add_argument("--ca_cert", default=f"{PROJECT_ROOT}/cert/cert.pem", type=str, 
+    parser.add_argument("--ca_cert", default=f"{PROJECT_ROOT}/secrets/cert.pem", type=str, 
                         help="Path to CA certificate for HTTPS requests")
     parser.add_argument("--metrics_csv", default=None, type=str,
                         help="Optional CSV file to append per-request metrics")
@@ -302,7 +302,16 @@ def main():
         images = collect_images(args.image_dir, args.max_images)
         print(f"collect {len(images)} images from {args.image_dir}")
 
-    with EmbeddingTransferClient(args.target, args.transport, args.ca_cert) as transfer_client:
+    if args.split == "local":
+        client_context = nullcontext(None)
+    else:
+        client_context = EmbeddingTransferClient(
+            args.target,
+            args.transport,
+            args.ca_cert,
+        )    
+
+    with client_context as transfer_client:
         if args.split != "local" and is_attestation_enabled():
             transfer_client.attest()
         batch_start = time.perf_counter()
