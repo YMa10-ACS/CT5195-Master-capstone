@@ -23,5 +23,5 @@ python -m pip install \
     datasets
 
 if [ ! -d "$NANOVLM_DIR" ]; then
-    git clone https://github.com/huggingface/nanoVLM.git "$NANOVLM_DIR"
+    git clone https://github.com/YMa10-ACS/nanoVLM.git "$NANOVLM_DIR"
 fi
