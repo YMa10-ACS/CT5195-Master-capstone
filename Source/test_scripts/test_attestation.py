@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import base64
 import sys
 import unittest
 from pathlib import Path
@@ -31,7 +32,7 @@ class AttestationTests(unittest.TestCase):
 
     def test_challenge_rejects_wrong_nonce_length(self):
         challenge = encode_challenge(create_challenge())
-        challenge["nonce"] = "MYQMYQMYQMYQMYQMYQMYQMYQMYQMYQMYQMYQMYQMYQMYQMYQMYQ"  # 32 bytes instead of 64
+        challenge["nonce"] = base64.b64encode(b"x" * 32).decode("ascii")
         with self.assertRaisesRegex(AttestationError, "exactly 64 bytes"):
             parse_challenge(challenge)
 
