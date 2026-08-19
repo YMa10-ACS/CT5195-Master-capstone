@@ -97,6 +97,7 @@ class EmbeddingTransferClient:
             splitted_image_ratio,
             prompt,
             generations,
+            verify=self._request_verify(),
         )
 
     def close(self):
@@ -158,6 +159,7 @@ def transfer_embedding(
     splitted_image_ratio,
     prompt,
     generations,
+    verify=None,
 ):
     """Send one embedding using a caller-owned, reusable requests session."""
 
@@ -175,8 +177,9 @@ def transfer_embedding(
     request_kwargs = {
         "data": payload,
         "headers": {"Visual-Meta": json.dumps(metadata)},
-        "verify": session.verify
     }
+    if transport_protocol != "http":
+        request_kwargs["verify"] = verify if verify is not None else False
 
     transfer_start = time.perf_counter()
     transfer_cpu_start = _cpu_times()
