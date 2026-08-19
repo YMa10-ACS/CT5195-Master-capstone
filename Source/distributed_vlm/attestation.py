@@ -24,8 +24,13 @@ ATTESTATION = os.getenv("ATTESTATION", "enabled").lower()
 
 NONCE_SIZE = 64
 TDX_HELPER_ENV = "TDX_ATTEST_HELPER"
-TDX_HELPER_DEFAULT = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "tdx_attest", "tdx-attest"
+TDX_HELPER_DEFAULT = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "..", 
+        "tdx_attest", 
+        "tdx-attest",
+    )
 )
 
 def is_attestation_enabled() -> bool:
