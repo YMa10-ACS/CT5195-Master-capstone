@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 APP_DIR = Path(__file__).resolve().parents[1] / "distributed_vlm"
+SECRETS_DIR = Path(__file__).resolve().parents[1] / "secrets"
 sys.path.insert(0, str(APP_DIR))
 
 if "psutil" not in sys.modules:
@@ -133,6 +134,27 @@ class TransferEmbeddingTests(unittest.TestCase):
         self.assertEqual(session.post.call_count, 2)
         session.close.assert_called_once_with()
 
+    @patch("transfer.requests.Session")
+    def test_client_uses_ca_certificate_for_https_transfer(self, session_factory):
+        session = self._session_with_response({
+            "result": [],
+            "metrics": {metric_names.CLOUD_TOTAL_REQUEST: 0.0},
+        })
+        session_factory.return_value = session
+
+        with EmbeddingTransferClient(
+            "cloud.example",
+            "https-aes-gcm",
+            f"{SECRETS_DIR}/cert.pem",
+        ) as client:
+            client.attested = True
+            client.transfer(self.projected, (1, 1), "", 1)
+
+        self.assertEqual(
+            session.post.call_args.kwargs["verify"],
+            f"{SECRETS_DIR}/cert.pem",
+        )
+
     @patch("transfer.verify_evidence", return_value=True)
     @patch("transfer.create_challenge", return_value=b"n" * 64)
     def test_client_attests_with_json_on_reused_session(
@@ -155,7 +177,7 @@ class TransferEmbeddingTests(unittest.TestCase):
         session.post.assert_called_once()
         self.assertEqual(
             session.post.call_args.args[0],
-            "https://cloud.example:8443/attestation",
+            "https://127.0.0.1:8443/attestation",
         )
         self.assertEqual(session.post.call_args.kwargs["json"]["version"], 1)
         self.assertIs(session.post.call_args.kwargs["verify"], False)
@@ -163,7 +185,7 @@ class TransferEmbeddingTests(unittest.TestCase):
 
     @patch("transfer.requests.Session")
     def test_client_rejects_transfer_before_attestation(self, _session_factory):
-        with EmbeddingTransferClient("cloud.example", "http") as client:
+        with EmbeddingTransferClient("127.0.0.1", "http") as client:
             with self.assertRaisesRegex(TransferError, "must succeed"):
                 client.transfer(self.projected, (1, 1), "", 1)
 
