@@ -169,7 +169,7 @@ class TransferEmbeddingTests(unittest.TestCase):
         session.post.return_value = response
 
         with patch("transfer.requests.Session", return_value=session):
-            with EmbeddingTransferClient("cloud.example", "https-aes-gcm") as client:
+            with EmbeddingTransferClient("127.0.0.1", "https-aes-gcm") as client:
                 self.assertTrue(client.attest())
                 self.assertTrue(client.attested)
 
