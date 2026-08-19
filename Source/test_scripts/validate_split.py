@@ -8,8 +8,8 @@ import sys
 import torch
 import torch.nn.functional as F
 
-ROOT = os.path.abspath(os.path.dirname(__file__))
-NANOVLM_PATH = os.path.join(ROOT, "nanoVLM")
+SOURCE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+NANOVLM_PATH = os.path.join(SOURCE_DIR, "nanoVLM")
 sys.path.insert(0, NANOVLM_PATH)
 
 from data.processors import get_tokenizer

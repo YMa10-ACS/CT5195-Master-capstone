@@ -6,18 +6,20 @@
 ### 
 set -e
 
-ROOT="$(cd "$(dirname "$0")" && pwd)"
-TDX_ATTESTATION_PATH="${ROOT}/tdx_attest"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+RECORD_DIR="$SOURCE_DIR/record"
+TDX_ATTESTATION_PATH="$SOURCE_DIR/tdx_attest"
 CLOUD_NO_TDX_TARGET="10.128.0.7"
 CLOUD_TDX_TARGET="10.128.0.6"
 MODES="http https-aes-gcm https-chacha20"
 
 clear_current_records() {
-  mkdir -p "$ROOT/record"
+  mkdir -p "$RECORD_DIR"
   for mode in $MODES; do
-    rm -f "$ROOT/record/distributed_vlm_edge_${mode}.log"
-    rm -f "$ROOT/record/distributed_vlm_metrics_${mode}.csv"
-    rm -f "$ROOT/record/distributed_vlm_throughput_${mode}.csv"
+    rm -f "$RECORD_DIR/distributed_vlm_edge_${mode}.log"
+    rm -f "$RECORD_DIR/distributed_vlm_metrics_${mode}.csv"
+    rm -f "$RECORD_DIR/distributed_vlm_throughput_${mode}.csv"
   done
 }
 
@@ -26,20 +28,20 @@ rename_records_for_target() {
   label="${target//./_}"
 
   for mode in $MODES; do
-    edge_log="$ROOT/record/distributed_vlm_edge_${mode}.log"
-    metrics_csv="$ROOT/record/distributed_vlm_metrics_${mode}.csv"
-    throughput_csv="$ROOT/record/distributed_vlm_throughput_${mode}.csv"
+    edge_log="$RECORD_DIR/distributed_vlm_edge_${mode}.log"
+    metrics_csv="$RECORD_DIR/distributed_vlm_metrics_${mode}.csv"
+    throughput_csv="$RECORD_DIR/distributed_vlm_throughput_${mode}.csv"
 
     if [ -f "$edge_log" ]; then
-      mv "$edge_log" "$ROOT/record/distributed_vlm_edge_${mode}_${label}.log"
+      mv "$edge_log" "$RECORD_DIR/distributed_vlm_edge_${mode}_${label}.log"
     fi
 
     if [ -f "$metrics_csv" ]; then
-      mv "$metrics_csv" "$ROOT/record/distributed_vlm_metrics_${mode}_${label}.csv"
+      mv "$metrics_csv" "$RECORD_DIR/distributed_vlm_metrics_${mode}_${label}.csv"
     fi
 
     if [ -f "$throughput_csv" ]; then
-      mv "$throughput_csv" "$ROOT/record/distributed_vlm_throughput_${mode}_${label}.csv"
+      mv "$throughput_csv" "$RECORD_DIR/distributed_vlm_throughput_${mode}_${label}.csv"
     fi
   done
 }
@@ -51,7 +53,7 @@ run_split_inference() {
 
   for mode in $MODES; do
     echo "===== Running mode: $mode split target: $target attestation: $attestation ====="
-    ATTESTATION="$attestation" bash run_edge_comparison.sh "$mode" "$target" "split"
+    ATTESTATION="$attestation" bash "$SCRIPT_DIR/run_edge_comparison.sh" "$mode" "$target" "split"
   done
 
   rename_records_for_target "$target"
@@ -59,8 +61,8 @@ run_split_inference() {
 
 run_local_inference() {
   clear_current_records
-  echo "===== Running mode: $mode local ====="
-  bash run_edge_comparison.sh "http" "127.0.0.1" "local"
+  echo "===== Running local mode ====="
+  bash "$SCRIPT_DIR/run_edge_comparison.sh" "http" "127.0.0.1" "local"
   rename_records_for_target "local"
 }
 
@@ -69,7 +71,7 @@ build_tdx_attestation() {
 }
 
 
-cd "$ROOT"
+cd "$SOURCE_DIR"
 
 build_tdx_attestation
 
