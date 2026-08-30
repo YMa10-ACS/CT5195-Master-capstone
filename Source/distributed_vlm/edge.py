@@ -216,10 +216,10 @@ def process_image(args, transfer_client, image_path, model, image_processor, tex
         metric_names.TRANSPORT: args.transport,
     }
 
+    processed_image, splitted_image_ratio = image_preprocessing(image_path, model, image_processor)
+
     # Start CPU sampler to measure CPU usage during embedding generation
     edge_embedding_cpu_sampler = start_cpu_sampler(interval=0.5)
-
-    processed_image, splitted_image_ratio = image_preprocessing(image_path, model, image_processor)
 
     # Start recording the time taken to generate the embedding for the processed image.
     embedding_cpu_start = cpu_times()
@@ -255,6 +255,7 @@ def process_image(args, transfer_client, image_path, model, image_processor, tex
     
 
     if args.split == "local" or args.split == "both":
+        
         # Start CPU sampler to measure CPU usage during embedding generation
         edge_generate_cpu_sampler = start_cpu_sampler(interval=0.5)
         local_generate_cpu_start = cpu_times()
