@@ -31,6 +31,7 @@ from metrics import MetricsRecorder, write_metrics_csv, write_throughput_csv
 from attestation import is_attestation_enabled
 from transfer import EmbeddingTransferClient, TransferError
 
+# Parse command-line options, validate image input, and select the compute device.
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--split", type=str, default="both", choices=["both", "local", "split"],
@@ -73,6 +74,7 @@ def parse_args():
 
     return args
 
+# Collect sorted JPG image paths from a directory, up to the optional limit.
 def collect_images(image_dir, max_images):
     image_paths = []
     for file_name in sorted(os.listdir(image_dir)):
@@ -83,12 +85,15 @@ def collect_images(image_dir, max_images):
 
     return image_paths
 
+# Resolve a single image path using the optional image directory.
 def get_single_image_path(image_dir, image):
     if image_dir:
         return os.path.join(image_dir, image)
     return image
 
+# Decorate a function to print its elapsed execution time.
 def time_using(func):
+    # Run the wrapped function and print its elapsed time before returning its result.
     @wraps(func)
     def wrapper(*args, **kargs):
         start = time.perf_counter()
@@ -101,6 +106,7 @@ def time_using(func):
         return result
     return wrapper
 
+# Load an RGB image, prepare image tensors, and remove an unsupported global image.
 @time_using
 def image_preprocessing(image, text_tokenizer, image_processor):
     # 1) Some image is RGBA (additional channel is alpha). So, I need to convert the image into RGB format.
@@ -116,6 +122,7 @@ def image_preprocessing(image, text_tokenizer, image_processor):
         processed_image = processed_image[1:]
     return processed_image, splitted_image_ratio
 
+# Encode image tensors and project visual features into the language model embedding space.
 def generate_embedding(processed_image, model, device):
     img_t = processed_image.to(device)
     print("img_t type:", type(img_t))
@@ -126,7 +133,7 @@ def generate_embedding(processed_image, model, device):
 
 
     # 4) EDGE compute: vision encoder + modality projector
-    with torch.no_grad():
+    with torch.inference_mode():
         # Convert image to vision embedding.
         vision_out = model.vision_encoder(img_t)
 
@@ -146,6 +153,7 @@ def generate_embedding(processed_image, model, device):
 
     return projected
 
+# Combine the prompt with visual embeddings and generate text locally.
 def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokenizer, generations, max_new_tokens) :
     
     # Print generate_text_by_embedding parameters for comparison with the cloud service.
@@ -176,6 +184,7 @@ def generate_text_by_embedding(model, device, projected, splitted_image_ratio, p
             )
     return text_list
 
+# Compare split and local outputs, print differences, and count matching pairs.
 def compare_generated_texts(result_list, nanovlm_list):
     if len(result_list) != len(nanovlm_list):
         raise ValueError("两个列表的长度必须一致")
@@ -193,7 +202,9 @@ def compare_generated_texts(result_list, nanovlm_list):
 
     print(f"unmatched pair / matched pair = {unmatched_pair}/{matched_pair}")
 
+# Decorate embedding generation to record elapsed time, CPU time, and sampled CPU usage.
 def measure_embedding(func):
+    # Run embedding generation and finalize its performance metrics even if it raises an error.
     @wraps(func)
     def wrapper(*args, metrics, **kwargs):
         metrics.start_cpu_sampling("embedding", interval=0.5)
@@ -215,6 +226,7 @@ def measure_embedding(func):
 
     return wrapper
 
+# Process one image in the selected inference modes, save metrics, and compare outputs when using both modes.
 def process_image(args, transfer_client, image_path, model, image_processor, text_tokenizer):
     result_list = []
     nanovlm_list = []
@@ -263,6 +275,49 @@ def process_image(args, transfer_client, image_path, model, image_processor, tex
 
     compare_generated_texts(result_list, nanovlm_list)
 
+# Create the transfer client context, or an empty context for local inference.
+def init_transfer_client(args):
+    if args.split == "local":
+        return nullcontext(None)
+    return EmbeddingTransferClient(
+        args.target,
+        args.transport,
+        args.ca_cert,
+    )
+
+# Manage the client context, perform optional attestation, and return the image batch processing time.
+def process_images(args, client_context, images, model, image_processor, text_tokenizer):
+    with client_context as transfer_client:
+        if args.split != "local" and is_attestation_enabled():
+            transfer_client.attest()
+        
+        # The timer measures the total time spent processing the images, 
+        # including preprocessing, inference, and data transfer. 
+        # It excludes model loading, image path collection, client setup, and attestation.
+
+        batch_start = time.perf_counter()
+        for index, image_path in enumerate(images, start=1):
+            print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")
+            process_image(args, transfer_client, image_path, model, image_processor, text_tokenizer)
+        batch_end = time.perf_counter()
+
+    return batch_end - batch_start
+
+# Calculate images per minute, print batch statistics, and write throughput metrics to CSV.
+def report_throughput(args, images, batch_total):
+    throughput_images_per_min = len(images) / batch_total * 60
+    print(f"throughput images: {len(images)}")
+    print(f"throughput total seconds: {batch_total}")
+    print(f"throughput images per minute: {throughput_images_per_min}")
+    write_throughput_csv(args.throughput_csv, {
+        metric_names.TRANSPORT: args.transport,
+        metric_names.SPLIT: args.split,
+        metric_names.TARGET: args.target,
+        metric_names.IMAGE_COUNT: len(images),
+        metric_names.BATCH_TOTAL_SECONDS: batch_total,
+        metric_names.THROUGHPUT_IMAGES_PER_MINUTE: throughput_images_per_min,
+    })
+
 # This is the main entry point of the edge application. 
 # It handles initialization, input selection, client setup, image processing, and throughput reporting.
 
@@ -281,42 +336,13 @@ def main():
         images = collect_images(args.image_dir, args.max_images)
         print(f"collect {len(images)} images from {args.image_dir}")
 
-    if args.split == "local":
-        client_context = nullcontext(None)
-    else:
-        client_context = EmbeddingTransferClient(
-            args.target,
-            args.transport,
-            args.ca_cert,
-        )
+    client_context = init_transfer_client(args)
 
-    with client_context as transfer_client:
-        if args.split != "local" and is_attestation_enabled():
-            transfer_client.attest()
-        
-        # The timer measures the total time spent processing the images, 
-        # including preprocessing, inference, and data transfer. 
-        # It excludes model loading, image path collection, client setup, and attestation.
-
-        batch_start = time.perf_counter()
-        for index, image_path in enumerate(images, start=1):
-            print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")
-            process_image(args, transfer_client, image_path, model, image_processor, text_tokenizer)
-        batch_end = time.perf_counter()
-
-    batch_total = batch_end - batch_start
-    throughput_images_per_min = len(images) / batch_total * 60
-    print(f"throughput images: {len(images)}")
-    print(f"throughput total seconds: {batch_total}")
-    print(f"throughput images per minute: {throughput_images_per_min}")
-    write_throughput_csv(args.throughput_csv, {
-        metric_names.TRANSPORT: args.transport,
-        metric_names.SPLIT: args.split,
-        metric_names.TARGET: args.target,
-        metric_names.IMAGE_COUNT: len(images),
-        metric_names.BATCH_TOTAL_SECONDS: batch_total,
-        metric_names.THROUGHPUT_IMAGES_PER_MINUTE: throughput_images_per_min,
-    })
+    batch_total = process_images(
+        args, client_context, images, model, image_processor, text_tokenizer
+    )
+    
+    report_throughput(args, images, batch_total)
 
 if __name__ == "__main__":
     main()
