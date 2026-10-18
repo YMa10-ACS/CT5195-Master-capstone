@@ -18,6 +18,7 @@ projected_cache_key = None
 projected_array = None
 projected_cpu_tensor = None
 
+# Read model and generation settings from environment variables and select the compute device.
 def parse_env():
     args = dict()
     args["weights"] = os.environ.get("WEIGHTS", "lusxvr/nanoVLM-230M-8k")
@@ -30,6 +31,7 @@ def parse_env():
     return args
 
 
+# Reuse or allocate a NumPy embedding buffer and its reshaped CPU tensor for the requested shape and dtype.
 def get_projected_buffer(shape, np_dtype):
     global projected_cache_key, projected_array, projected_cpu_tensor
 
@@ -50,6 +52,7 @@ def get_projected_buffer(shape, np_dtype):
     return projected_array, projected_cpu_tensor
 
 
+# Decode request metadata and binary embeddings, copy them into the reusable buffer, and select the target device.
 def reconstruct_from_request(device):
     raw = request.data
     meta_json = request.headers.get("Visual-Meta")
@@ -77,6 +80,7 @@ tokenizer = None
 prompt_cache = {}
 
 
+# Return attestation evidence for the request, or an error when attestation is disabled or evidence creation fails.
 @app.route("/attestation", methods=["POST"])
 def attestation():
     if not is_attestation_enabled():
@@ -93,6 +97,7 @@ def attestation():
     return jsonify(evidence)
 
 
+# Load and cache the cloud model and tokenizer when needed, and log initialization time.
 def load_cloud_model(weights, device):
     global model, tokenizer
 
@@ -106,6 +111,7 @@ def load_cloud_model(weights, device):
     return model, tokenizer
 
 
+# Reuse cached prompt tokens or construct them for the requested device, prompt, and image tile layout.
 def get_prompt_tokens(device, prompt, splitted_image_ratio):
     cache_key = (device, prompt, tuple(splitted_image_ratio))
     tokens = prompt_cache.get(cache_key)
@@ -115,10 +121,12 @@ def get_prompt_tokens(device, prompt, splitted_image_ratio):
     return tokens
 
 
+# Replace image token positions in the prompt embeddings with the projected visual embeddings.
 def combine_projected_with_prompt(tokens, projected):
     return combined_image_and_text_message(model, tokens, projected)
 
 
+# Generate text from combined embeddings using greedy decoding and record generation metrics.
 def generate_from_embedding(generations, device, tokens, token_embd, max_new_tokens, metrics):
     return generate(
                     model,
@@ -132,13 +140,8 @@ def generate_from_embedding(generations, device, tokens, token_embd, max_new_tok
                     timing_metrics=metrics
                 )
 
-@app.route("/", methods=["POST"])
-def receive_embedding():
-    metrics = MetricsRecorder()
-    metrics.start_counter(metric_names.CLOUD_TOTAL_REQUEST)
-    metrics.start_cpu_counter(metric_names.CLOUD_CPU_TOTAL)
-    metrics.start_cpu_sampling("cloud_request", interval=0.5)
-
+# Reconstruct the visual embeddings and generate text while recording stage timings.
+def process_embedding_request(metrics):
     device = app.config["device"]
     prompt = app.config["prompt"]
     max_new_tokens = app.config["max_new_tokens"]
@@ -177,6 +180,11 @@ def receive_embedding():
         )
         metrics.stop_counter(metric_names.CLOUD_GENERATE_TIME)
 
+    return text_list
+
+
+# Finalize process CPU usage and total request timing.
+def finalize_request_metrics(metrics):
     metrics.stop_cpu_counter(metric_names.CLOUD_CPU_TOTAL)
     metrics.stop_cpu_sampling(
         "cloud_request",
@@ -185,8 +193,23 @@ def receive_embedding():
     )
     metrics.stop_counter(metric_names.CLOUD_TOTAL_REQUEST)
 
+
+# Handle an embedding request, finalize metrics even on failure, and return generated text and metrics as JSON.
+@app.route("/", methods=["POST"])
+def receive_embedding():
+    metrics = MetricsRecorder()
+    metrics.start_counter(metric_names.CLOUD_TOTAL_REQUEST)
+    metrics.start_cpu_counter(metric_names.CLOUD_CPU_TOTAL)
+    metrics.start_cpu_sampling("cloud_request", interval=0.5)
+
+    try:
+        text_list = process_embedding_request(metrics)
+    finally:
+        finalize_request_metrics(metrics)
+
     return jsonify({"result": text_list, "metrics": metrics.row()})
 
+# Initialize the cloud model and Flask configuration, then return the application.
 def create_app():
     app_name = os.path.basename(__file__)
     app.logger.info(f"{app_name} startup...")
