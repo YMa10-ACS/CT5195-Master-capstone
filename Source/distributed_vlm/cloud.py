@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, os, json, time
+import sys, os, json
 import numpy as np
 import torch
 from flask import Flask, request, jsonify
@@ -14,10 +14,6 @@ import nanoVLM.models.language_model as lm
 from vlm import load_model, combined_image_and_text_message, construct_prompt, generate
 
 
-projected_cache_key = None
-projected_array = None
-projected_cpu_tensor = None
-
 # Read model and generation settings from environment variables and select the compute device.
 def parse_env():
     args = dict()
@@ -31,28 +27,7 @@ def parse_env():
     return args
 
 
-# Reuse or allocate a NumPy embedding buffer and its reshaped CPU tensor for the requested shape and dtype.
-def get_projected_buffer(shape, np_dtype):
-    global projected_cache_key, projected_array, projected_cpu_tensor
-
-    shape = tuple(shape)
-    projected_shape = (1, -1, shape[-1])
-    cache_key = (shape, np.dtype(np_dtype).str)
-
-    if projected_cache_key != cache_key:
-        projected_cache_key = cache_key
-        projected_array = np.empty(shape, dtype=np_dtype)
-        projected_cpu_tensor = torch.from_numpy(projected_array).reshape(projected_shape)
-        app.logger.info(
-            "allocated projected buffer:\n"
-            f"  shape: {shape}\n"
-            f"  dtype: {np.dtype(np_dtype)}"
-        )
-
-    return projected_array, projected_cpu_tensor
-
-
-# Decode request metadata and binary embeddings, copy them into the reusable buffer, and select the target device.
+# Decode request metadata and binary embeddings into request-owned memory and select the target device.
 def reconstruct_from_request(device):
     raw = request.data
     meta_json = request.headers.get("Visual-Meta")
@@ -64,9 +39,8 @@ def reconstruct_from_request(device):
     generations = int(metadata["generations"])
 
     np_dtype = np.float32 if dtype == "float32" else np.float16
-    raw_view = np.frombuffer(raw, dtype=np_dtype).reshape(shape)
-    data, projected_cpu = get_projected_buffer(shape, np_dtype)
-    np.copyto(data, raw_view)
+    data = np.frombuffer(raw, dtype=np_dtype).reshape(shape).copy()
+    projected_cpu = torch.from_numpy(data).reshape(1, -1, shape[-1])
 
     app.logger.info(f"data = {data.shape}")
     app.logger.info(f"data dtype: {data.dtype}")
@@ -75,8 +49,6 @@ def reconstruct_from_request(device):
     return projected, splitted_image_ratio, generations
 
 app = Flask(__name__)
-model = None
-tokenizer = None
 prompt_cache = {}
 
 
@@ -97,22 +69,8 @@ def attestation():
     return jsonify(evidence)
 
 
-# Load and cache the cloud model and tokenizer when needed, and log initialization time.
-def load_cloud_model(weights, device):
-    global model, tokenizer
-
-    if model is None or tokenizer is None:
-        load_start = time.perf_counter()
-        model = load_model(weights, device)
-        tokenizer = init_tokenizer(model)
-        load_end = time.perf_counter()
-        app.logger.info(f"cloud model loaded in {load_end - load_start:.3f} seconds")
-
-    return model, tokenizer
-
-
 # Reuse cached prompt tokens or construct them for the requested device, prompt, and image tile layout.
-def get_prompt_tokens(device, prompt, splitted_image_ratio):
+def get_prompt_tokens(model, tokenizer, device, prompt, splitted_image_ratio):
     cache_key = (device, prompt, tuple(splitted_image_ratio))
     tokens = prompt_cache.get(cache_key)
     if tokens is None:
@@ -122,12 +80,12 @@ def get_prompt_tokens(device, prompt, splitted_image_ratio):
 
 
 # Replace image token positions in the prompt embeddings with the projected visual embeddings.
-def combine_projected_with_prompt(tokens, projected):
+def combine_projected_with_prompt(model, tokens, projected):
     return combined_image_and_text_message(model, tokens, projected)
 
 
 # Generate text from combined embeddings using greedy decoding and record generation metrics.
-def generate_from_embedding(generations, device, tokens, token_embd, max_new_tokens, metrics):
+def generate_from_embedding(model, generations, device, tokens, token_embd, max_new_tokens, metrics):
     return generate(
                     model,
                     generations,
@@ -141,14 +99,7 @@ def generate_from_embedding(generations, device, tokens, token_embd, max_new_tok
                 )
 
 # Reconstruct the visual embeddings and generate text while recording stage timings.
-def process_embedding_request(metrics):
-    device = app.config["device"]
-    prompt = app.config["prompt"]
-    max_new_tokens = app.config["max_new_tokens"]
-
-    metrics.start_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
-    projected, splitted_image_ratio, generations = reconstruct_from_request(device)
-    metrics.stop_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
+def process_embedding_request(model, tokenizer, metrics):
 
     app.logger.info(
         "receive_embedding parameters:\n"
@@ -160,17 +111,26 @@ def process_embedding_request(metrics):
         f"  generations: {generations}"
     )
 
+    device = app.config["device"]
+    prompt = app.config["prompt"]
+    max_new_tokens = app.config["max_new_tokens"]
+
+    metrics.start_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
+    projected, splitted_image_ratio, generations = reconstruct_from_request(device)
+    metrics.stop_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
+
     metrics.start_counter(metric_names.CLOUD_PROMPT_TIME)
-    tokens = get_prompt_tokens(device, prompt, splitted_image_ratio)
+    tokens = get_prompt_tokens(model, tokenizer, device, prompt, splitted_image_ratio)
     metrics.stop_counter(metric_names.CLOUD_PROMPT_TIME)
 
     with torch.inference_mode():
         metrics.start_counter(metric_names.CLOUD_COMBINE_TIME)
-        token_embd = combine_projected_with_prompt(tokens, projected)
+        token_embd = combine_projected_with_prompt(model, tokens, projected)
         metrics.stop_counter(metric_names.CLOUD_COMBINE_TIME)
 
         metrics.start_counter(metric_names.CLOUD_GENERATE_TIME)
         text_list = generate_from_embedding(
+            model,
             generations,
             device,
             tokens,
@@ -185,13 +145,13 @@ def process_embedding_request(metrics):
 
 # Finalize process CPU usage and total request timing.
 def finalize_request_metrics(metrics):
+    metrics.stop_counter(metric_names.CLOUD_TOTAL_REQUEST)
     metrics.stop_cpu_counter(metric_names.CLOUD_CPU_TOTAL)
     metrics.stop_cpu_sampling(
         "cloud_request",
         metric_names.CLOUD_CPU_AVG_PCT,
         metric_names.CLOUD_CPU_MAX_PCT,
     )
-    metrics.stop_counter(metric_names.CLOUD_TOTAL_REQUEST)
 
 
 # Handle an embedding request, finalize metrics even on failure, and return generated text and metrics as JSON.
@@ -203,7 +163,9 @@ def receive_embedding():
     metrics.start_cpu_sampling("cloud_request", interval=0.5)
 
     try:
-        text_list = process_embedding_request(metrics)
+        text_list = process_embedding_request(
+            app.config["model"], app.config["tokenizer"], metrics
+        )
     finally:
         finalize_request_metrics(metrics)
 
@@ -215,8 +177,8 @@ def create_app():
     app.logger.info(f"{app_name} startup...")
     args = parse_env()
 
-    torch.manual_seed(0)
-    load_cloud_model(args["weights"], args["device"])
+    app.config["model"] = load_model(args["weights"], args["device"])
+    app.config["tokenizer"] = init_tokenizer(app.config["model"])
 
     app.config["prompt"] = args["prompt"]
     app.config["max_new_tokens"] = args["max_new_tokens"]
