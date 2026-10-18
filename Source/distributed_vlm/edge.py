@@ -10,7 +10,6 @@ import torch
 
 from PIL import Image
 import argparse
-import psutil
 
 import time
 from datetime import datetime, timezone
@@ -25,25 +24,19 @@ sys.path.insert(0, PROJECT_ROOT)
 NANOVLM_PATH = os.path.join(PROJECT_ROOT, "nanoVLM")
 sys.path.insert(0, NANOVLM_PATH)
 
-from data.processors import get_tokenizer
-from monitor import ProcessSampler
 from vlm import load_model, init_image_processor, init_tokenizer
 from vlm import construct_prompt, combined_image_and_text_message, generate
 from metrics import names as metric_names
-from metrics import write_metrics_csv, write_throughput_csv
+from metrics import MetricsRecorder, write_metrics_csv, write_throughput_csv
 from attestation import is_attestation_enabled
 from transfer import EmbeddingTransferClient, TransferError
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--hf_model", type=str, default="lusxvr/nanoVLM-230M-8k",
-        help="HuggingFace repo ID to download from incase --checkpoint isnt set."
-    )
     parser.add_argument("--split", type=str, default="both", choices=["both", "local", "split"],
                         help="Whether to run the model locally or split between edge and cloud")
     parser.add_argument("--image", type=str, default=None,
-                        help="Path to input image")
+                        help="Path to input single image")
     parser.add_argument("--target", type=str, default="127.0.0.1",
                         help="Target IP for the request")
     parser.add_argument("--image_dir", type=str, default=None,
@@ -80,24 +73,6 @@ def parse_args():
 
     return args
 
-def cpu_times():
-    times = psutil.Process(os.getpid()).cpu_times()
-    return times.user + times.system
-
-def start_cpu_sampler(interval=0.5):
-    pid = os.getpid()
-    sampler = ProcessSampler(pid=pid, interval=interval)
-    sampler.start()
-
-    return sampler
-
-def end_cpu_sampler(sampler):
-    sampler.stop()
-    cpu_samples = [cpu for cpu, _ in sampler.samples]
-    cpu_avg_pct = sum(cpu_samples) / len(cpu_samples) if cpu_samples else 0.0
-    cpu_max_pct = max(cpu_samples) if cpu_samples else 0.0
-    return cpu_avg_pct, cpu_max_pct
-
 def collect_images(image_dir, max_images):
     image_paths = []
     for file_name in sorted(os.listdir(image_dir)):
@@ -127,22 +102,16 @@ def time_using(func):
     return wrapper
 
 @time_using
-def image_preprocessing(image, model, image_processor):
+def image_preprocessing(image, text_tokenizer, image_processor):
     # 1) Some image is RGBA (additional channel is alpha). So, I need to convert the image into RGB format.
     img = Image.open(image).convert("RGB")
     processed_image, splitted_image_ratio = image_processor(img)
 
     # 2) Some configs insert a global image token; keep behaviour consistent with generate.py
-    # 3) We also need tokenizer here just to check tokeniser here just to check the global_image_token existence.
+    # 3) Reuse the existing tokenizer to check for the global image token.
     # 4) Because processed_image may still contain an extra global image tensor, even if the tokenizer does not support a global image token.
-    tokenizer = get_tokenizer(
-        model.cfg.lm_tokenizer,
-        model.cfg.vlm_extra_tokens,
-        model.cfg.lm_chat_template
-    )
-
     # 
-    if (not hasattr(tokenizer, "global_image_token")
+    if (not hasattr(text_tokenizer, "global_image_token")
         and splitted_image_ratio[0] * splitted_image_ratio[1] == len(processed_image) - 1):
         processed_image = processed_image[1:]
     return processed_image, splitted_image_ratio
@@ -177,7 +146,7 @@ def generate_embedding(processed_image, model, device):
 
     return projected
 
-def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokonizer, generations, max_new_tokens) :
+def generate_text_by_embedding(model, device, projected, splitted_image_ratio, prompt, text_tokenizer, generations, max_new_tokens) :
     
     # Print generate_text_by_embedding parameters for comparison with the cloud service.
     print(
@@ -191,7 +160,7 @@ def generate_text_by_embedding(model, device, projected, splitted_image_ratio, p
     )
 
 
-    tokens = construct_prompt(model, device, prompt, text_tokonizer, splitted_image_ratio)
+    tokens = construct_prompt(model, device, prompt, text_tokenizer, splitted_image_ratio)
 
     token_embd = combined_image_and_text_message(model, tokens, projected)
 
@@ -207,35 +176,61 @@ def generate_text_by_embedding(model, device, projected, splitted_image_ratio, p
             )
     return text_list
 
-def process_image(args, transfer_client, image_path, model, image_processor, text_tokonizer):
+def compare_generated_texts(result_list, nanovlm_list):
+    if len(result_list) != len(nanovlm_list):
+        raise ValueError("两个列表的长度必须一致")
+
+    unmatched_pair = 0
+    matched_pair = 0
+
+    for s1, s2 in zip(result_list, nanovlm_list):
+        if s1 != s2:
+            print(f"split learning generate text: {s1}")
+            print(f"nanoVLM generate text: {s2}")
+            unmatched_pair += 1
+        else:
+            matched_pair += 1
+
+    print(f"unmatched pair / matched pair = {unmatched_pair}/{matched_pair}")
+
+def measure_embedding(func):
+    @wraps(func)
+    def wrapper(*args, metrics, **kwargs):
+        metrics.start_cpu_sampling("embedding", interval=0.5)
+        metrics.start_cpu_counter(metric_names.EDGE_EMBEDDING_CPU_TOTAL)
+        metrics.start_counter(metric_names.EDGE_EMBEDDING_LATENCY)
+
+        try:
+            return func(*args, **kwargs)
+        finally:
+            elapsed = metrics.stop_counter(metric_names.EDGE_EMBEDDING_LATENCY)
+            metrics.stop_cpu_counter(metric_names.EDGE_EMBEDDING_CPU_TOTAL)
+            metrics.stop_cpu_sampling(
+                "embedding",
+                metric_names.EDGE_EMBEDDING_CPU_AVG_PCT,
+                metric_names.EDGE_EMBEDDING_CPU_MAX_PCT,
+            )
+
+            print(f"[timing] generate_embedding: {elapsed:.6f} seconds")
+
+    return wrapper
+
+def process_image(args, transfer_client, image_path, model, image_processor, text_tokenizer):
     result_list = []
     nanovlm_list = []
-    metrics = {
+    metrics = MetricsRecorder({
         metric_names.TIMESTAMP: datetime.now(timezone.utc).isoformat(),
         metric_names.IMAGE: image_path,
         metric_names.TRANSPORT: args.transport,
-    }
+    })
 
-    processed_image, splitted_image_ratio = image_preprocessing(image_path, model, image_processor)
+    processed_image, splitted_image_ratio = image_preprocessing(image_path, text_tokenizer, image_processor)
 
-    # Start CPU sampler to measure CPU usage during embedding generation
-    edge_embedding_cpu_sampler = start_cpu_sampler(interval=0.5)
+    projected = measure_embedding(generate_embedding)(
+        processed_image, model, args.device, metrics=metrics
+    )
 
-    # Start recording the time taken to generate the embedding for the processed image.
-    embedding_cpu_start = cpu_times()
-    embedding_start = time.perf_counter()
-    projected = generate_embedding(processed_image, model, args.device)
-    embedding_end = time.perf_counter()
-    embedding_cpu_end = cpu_times()
-    print(f"[timeing] generate_embedding: {embedding_end - embedding_start} seconds")
-    metrics[metric_names.EDGE_EMBEDDING_LATENCY] = embedding_end - embedding_start
-    metrics[metric_names.EDGE_EMBEDDING_CPU_TOTAL] = embedding_cpu_end - embedding_cpu_start
-
-    edge_embedding_cpu_avg_pct, edge_embedding_cpu_max_pct = end_cpu_sampler(edge_embedding_cpu_sampler)
-    metrics[metric_names.EDGE_EMBEDDING_CPU_AVG_PCT] = edge_embedding_cpu_avg_pct
-    metrics[metric_names.EDGE_EMBEDDING_CPU_MAX_PCT] = edge_embedding_cpu_max_pct
-
-    split_start = time.perf_counter()
+    metrics.start_counter(metric_names.SPLIT_LATENCY)
     if args.split == "split" or args.split == "both":
         try:
             result_list, transfer_metrics = transfer_client.transfer(
@@ -248,46 +243,28 @@ def process_image(args, transfer_client, image_path, model, image_processor, tex
             raise RuntimeError(
                 f"Unable to complete {args.transport} transfer for {image_path}: {error}"
             ) from error
-        split_end = time.perf_counter()
-        metrics[metric_names.SPLIT_LATENCY] = split_end - split_start
+        metrics.stop_counter(metric_names.SPLIT_LATENCY)
 
         metrics.update(transfer_metrics)
     
 
     if args.split == "local" or args.split == "both":
         
-        # Start CPU sampler to measure CPU usage during embedding generation
-        edge_generate_cpu_sampler = start_cpu_sampler(interval=0.5)
-        local_generate_cpu_start = cpu_times()
-        local_generate_start = time.perf_counter()
-        nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokonizer, args.generations, args.max_new_tokens)
-        
-        local_generate_end = time.perf_counter()
-        local_generate_cpu_end = cpu_times()
+        metrics.start_cpu_counter(metric_names.LOCAL_BASELINE_CPU_TOTAL)
+        metrics.start_counter(metric_names.LOCAL_BASELINE_LATENCY)
+        nanovlm_list = generate_text_by_embedding(model, args.device, projected, splitted_image_ratio, args.prompt, text_tokenizer, args.generations, args.max_new_tokens)
+        metrics.stop_counter(metric_names.LOCAL_BASELINE_LATENCY)
+        metrics.stop_cpu_counter(metric_names.LOCAL_BASELINE_CPU_TOTAL)
 
-        metrics[metric_names.LOCAL_BASELINE_LATENCY] = local_generate_end - local_generate_start
-        metrics[metric_names.LOCAL_BASELINE_CPU_TOTAL] = local_generate_cpu_end - local_generate_cpu_start
-        
-        edge_generate_cpu_avg_pct, edge_generate_cpu_max_pct = end_cpu_sampler(edge_generate_cpu_sampler)
-        metrics[metric_names.EDGE_GENERATE_CPU_AVG_PCT] = edge_generate_cpu_avg_pct
-        metrics[metric_names.EDGE_GENERATE_CPU_MAX_PCT] = edge_generate_cpu_max_pct
-    
-    write_metrics_csv(args.metrics_csv, metrics)
+    write_metrics_csv(args.metrics_csv, metrics.row())
 
     if args.split != "both":
         return
 
-    unmatched_pair = 0
-    matched_pair = 0
-    for s1, s2 in zip(result_list, nanovlm_list) :
-        if s1 != s2 :
-            print(f"split leanring generate text : {s1}")
-            print(f"nanoVLM generate text: {s2}")
-            unmatched_pair += 1
-        else :
-            matched_pair += 1
+    compare_generated_texts(result_list, nanovlm_list)
 
-    print(f"unmatch pair / matched pair = {unmatched_pair}/{matched_pair}")
+# This is the main entry point of the edge application. 
+# It handles initialization, input selection, client setup, image processing, and throughput reporting.
 
 def main():
     app_name = os.path.basename(__file__)
@@ -296,7 +273,7 @@ def main():
 
     model = load_model(args.weights, args.device)
     image_processor = init_image_processor(model)
-    text_tokonizer = init_tokenizer(model)
+    text_tokenizer = init_tokenizer(model)
 
     if args.image:
         images = [get_single_image_path(args.image_dir, args.image)]
@@ -311,15 +288,20 @@ def main():
             args.target,
             args.transport,
             args.ca_cert,
-        )    
+        )
 
     with client_context as transfer_client:
         if args.split != "local" and is_attestation_enabled():
             transfer_client.attest()
+        
+        # The timer measures the total time spent processing the images, 
+        # including preprocessing, inference, and data transfer. 
+        # It excludes model loading, image path collection, client setup, and attestation.
+
         batch_start = time.perf_counter()
         for index, image_path in enumerate(images, start=1):
             print(f"===== Image {index}/{len(images)}: {os.path.basename(image_path)} =====")
-            process_image(args, transfer_client, image_path, model, image_processor, text_tokonizer)
+            process_image(args, transfer_client, image_path, model, image_processor, text_tokenizer)
         batch_end = time.perf_counter()
 
     batch_total = batch_end - batch_start

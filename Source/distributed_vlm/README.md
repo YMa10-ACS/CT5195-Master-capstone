@@ -1,3 +1,8 @@
+<!--
+ * @Description: 
+ * @Date: 2026-08-18 14:14:45
+ * @Author: Yaoquan Ma
+-->
 # Distributed VLM Application
 
 This directory contains the project-specific implementation of secure
@@ -17,6 +22,7 @@ historical experiment records.
 | `monitor.py` | Process CPU and memory sampling |
 | `metrics/` | Metric names, recorders and CSV writers |
 | `tdx_attest/` | Go helper for creating and verifying Intel TDX evidence |
+| `test_scripts/` | Scripts for functional validation and performance benchmarking |
 
 `vlm.py`, `transfer.py`, `attestation.py`, `monitor.py`, `metrics/` and
 `tdx_attest/` are infrastructure components rather than experiment business
@@ -24,13 +30,13 @@ logic. They can later be moved into a dedicated `framework/` package after
 imports and tests have been prepared.
 
 ## Execution scripts
-
-- `start_cloud.sh` starts one cloud service for a selected transport.
-- `run_edge_comparison.sh` runs an edge batch and writes metrics.
-- `run_all_modes.sh` compares normal VM, TDX VM and local inference modes.
-- `run_all_cloud_modes.sh` starts the supported cloud transport modes.
-- `check_tls_version.sh` checks the negotiated TLS configuration.
-- `../init.sh` prepares the application environment and nanoVLM dependency.
+In test_scripts directory:
+- `test_scripts/start_cloud.sh` starts one cloud service for a selected transport.
+- `test_scripts/run_edge_comparison.sh` runs an edge batch and writes metrics.
+- `test_scripts/run_all_modes.sh` compares normal VM, TDX VM and local inference modes.
+- `test_scripts/run_all_cloud_modes.sh` starts the supported cloud transport modes.
+- `test_scripts/check_tls_version.sh` checks the negotiated TLS configuration.
+- `init.sh` prepares the application environment and nanoVLM dependency.
 
 ## Historical records
 
@@ -58,21 +64,6 @@ environment variables and shell-script defaults. Important inputs include:
 - attestation state and TDX helper path;
 - certificate path;
 - metrics and throughput output paths.
-
-## Known path issues after directory reorganization
-
-The following paths still refer to the previous layout and must be corrected
-before the reorganized tree is used for a new experiment:
-
-- `edge.py` still defaults to `Source/cert/cert.pem`.
-- `start_cloud.sh` still loads OpenSSL files from this directory and
-  certificates from `../cert/`.
-- The OpenSSL files are now under `Source/configs/`.
-- The certificate files are now under `Source/secrets/`.
-- Analysis scripts have moved to `Source/analysis/`, but their input paths
-  still assume record directories next to the scripts.
-
-These are documented limitations, not supported path aliases.
 
 ## Metrics
 

@@ -32,20 +32,30 @@ def init_tokenizer(model) :
         model.cfg.lm_chat_template
     )
 
+    print("tokenizer initialized with lm_tokenizer:", model.cfg.lm_tokenizer,
+          "vlm_extra_tokens:", model.cfg.vlm_extra_tokens,
+          "lm_chat_template:", model.cfg.lm_chat_template)
+
     return tokenizer
 
 def init_image_processor(model) :
 
     # Build image processor (same as generate.py style)
     resize_to_max_side_len = getattr(model.cfg, "resize_to_max_side_len", False)
-    print("resize to max side len :", resize_to_max_side_len)
-
+    
     # Create an image processor object with specified parameters
     image_processor = get_image_processor(
         model.cfg.max_img_size,
         model.cfg.vit_img_size,
         resize_to_max_side_len
     )
+
+    print("image processor initialized with max_img_size:", model.cfg.max_img_size,
+          "vit_img_size:", model.cfg.vit_img_size,
+          "resize_to_max_side_len:", resize_to_max_side_len)
+
+    # The vision encoder input size refers to the pixel dimensions, such as 224 by 224. 
+    # So images are typically preprocessed to match that size, by resizing and sometimes cropping or padding.
 
     return image_processor
 
