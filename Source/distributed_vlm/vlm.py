@@ -18,6 +18,7 @@ from models.utils import top_k_top_p_filtering
 from data.processors import get_tokenizer, get_image_string, get_image_processor
 from metrics import names as metric_names
 
+# Load pretrained weights, set evaluation mode, and move the model to the target device.
 def load_model(weights, device):
     torch.manual_seed(0)
     model = VisionLanguageModel.from_pretrained(weights)
@@ -25,6 +26,7 @@ def load_model(weights, device):
 
     return model
 
+# Initialize the tokenizer with the model’s special tokens and chat template.
 def init_tokenizer(model) :
     tokenizer = get_tokenizer(
         model.cfg.lm_tokenizer,
@@ -38,6 +40,7 @@ def init_tokenizer(model) :
 
     return tokenizer
 
+# Build the image preprocessing pipeline using the model’s image size settings.
 def init_image_processor(model) :
 
     # Build image processor (same as generate.py style)
@@ -60,6 +63,7 @@ def init_image_processor(model) :
     return image_processor
 
 
+# Combine image placeholders with the text prompt and return token IDs on the target device.
 def construct_prompt(model, device, prompt, tokenizer, splitted_image_ratio):
     splitted_image_ratio = tuple(splitted_image_ratio)
     image_string = get_image_string(tokenizer, [splitted_image_ratio], model.cfg.mp_image_token_length)
@@ -70,6 +74,7 @@ def construct_prompt(model, device, prompt, tokenizer, splitted_image_ratio):
     
     return tokens
 
+# Look up token embeddings, match visual feature dtype, and replace image placeholder embeddings.
 def combined_image_and_text_message(model, tokens, projected):
 
     token_embd = model.decoder.token_embedding(tokens) # [B, T_prompt_text, D_lm]
@@ -78,6 +83,7 @@ def combined_image_and_text_message(model, tokens, projected):
 
     return token_embd
 
+# Generate text with prefill and KV-cached decoding, using greedy selection or sampling and optional metrics.
 @torch.inference_mode()
 def generate(model, generations, device, input_ids, token_embd, attention_mask=None, max_new_tokens=5, top_k=50, top_p=0.9, temperature=0.5, greedy=False, timing_metrics=None):
         

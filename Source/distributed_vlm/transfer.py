@@ -169,7 +169,6 @@ def transfer_embedding(
         "generations": int(generations),
     }
     payload = data.tobytes()
-    target_url = _target_url_for_transport(target, transport_protocol)
 
     request_kwargs = {
         "data": payload,
@@ -182,6 +181,7 @@ def transfer_embedding(
     transfer_cpu_start = _cpu_times()
 
     try:
+        target_url = _target_url_for_transport(target, transport_protocol)
         response = session.post(target_url, **request_kwargs)
     except requests.RequestException as error:
         raise TransferError(

@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument("--max_images", type=int, default=None,
                         help="Maximum number of images to process in batch mode")
     parser.add_argument("--prompt", type=str, default="What is this?",
-                        help="Text prompt for local inference; cloud inference uses the cloud prompt configuration")
+                        help="Text prompt to feed the model")
     parser.add_argument("--generations", type=int, default=5,
                         help="Num. of outputs to generate")
     parser.add_argument("--max_new_tokens", type=int, default=300,
@@ -122,7 +122,32 @@ def image_preprocessing(image, text_tokenizer, image_processor):
         processed_image = processed_image[1:]
     return processed_image, splitted_image_ratio
 
+# Decorate embedding generation to record elapsed time, CPU time, and sampled CPU usage.
+def measure_embedding(func):
+    # Run embedding generation and finalize its performance metrics even if it raises an error.
+    @wraps(func)
+    def wrapper(*args, metrics, **kwargs):
+        metrics.start_cpu_sampling("embedding", interval=0.5)
+        metrics.start_cpu_counter(metric_names.EDGE_EMBEDDING_CPU_TOTAL)
+        metrics.start_counter(metric_names.EDGE_EMBEDDING_LATENCY)
+
+        try:
+            return func(*args, **kwargs)
+        finally:
+            elapsed = metrics.stop_counter(metric_names.EDGE_EMBEDDING_LATENCY)
+            metrics.stop_cpu_counter(metric_names.EDGE_EMBEDDING_CPU_TOTAL)
+            metrics.stop_cpu_sampling(
+                "embedding",
+                metric_names.EDGE_EMBEDDING_CPU_AVG_PCT,
+                metric_names.EDGE_EMBEDDING_CPU_MAX_PCT,
+            )
+
+            print(f"[timing] generate_embedding: {elapsed:.6f} seconds")
+
+    return wrapper
+
 # Encode image tensors and project visual features into the language model embedding space.
+@measure_embedding
 def generate_embedding(processed_image, model, device):
     img_t = processed_image.to(device)
     print("img_t type:", type(img_t))
@@ -202,30 +227,6 @@ def compare_generated_texts(result_list, nanovlm_list):
 
     print(f"unmatched pair / matched pair = {unmatched_pair}/{matched_pair}")
 
-# Decorate embedding generation to record elapsed time, CPU time, and sampled CPU usage.
-def measure_embedding(func):
-    # Run embedding generation and finalize its performance metrics even if it raises an error.
-    @wraps(func)
-    def wrapper(*args, metrics, **kwargs):
-        metrics.start_cpu_sampling("embedding", interval=0.5)
-        metrics.start_cpu_counter(metric_names.EDGE_EMBEDDING_CPU_TOTAL)
-        metrics.start_counter(metric_names.EDGE_EMBEDDING_LATENCY)
-
-        try:
-            return func(*args, **kwargs)
-        finally:
-            elapsed = metrics.stop_counter(metric_names.EDGE_EMBEDDING_LATENCY)
-            metrics.stop_cpu_counter(metric_names.EDGE_EMBEDDING_CPU_TOTAL)
-            metrics.stop_cpu_sampling(
-                "embedding",
-                metric_names.EDGE_EMBEDDING_CPU_AVG_PCT,
-                metric_names.EDGE_EMBEDDING_CPU_MAX_PCT,
-            )
-
-            print(f"[timing] generate_embedding: {elapsed:.6f} seconds")
-
-    return wrapper
-
 # Process one image in the selected inference modes, save metrics, and compare outputs when using both modes.
 def process_image(args, transfer_client, image_path, model, image_processor, text_tokenizer):
     result_list = []
@@ -238,7 +239,7 @@ def process_image(args, transfer_client, image_path, model, image_processor, tex
 
     processed_image, splitted_image_ratio = image_preprocessing(image_path, text_tokenizer, image_processor)
 
-    projected = measure_embedding(generate_embedding)(
+    projected = generate_embedding(
         processed_image, model, args.device, metrics=metrics
     )
 
@@ -248,6 +249,7 @@ def process_image(args, transfer_client, image_path, model, image_processor, tex
             result_list, transfer_metrics = transfer_client.transfer(
                 projected,
                 splitted_image_ratio,
+                args.prompt,
                 args.generations,
             )
         except TransferError as error:
@@ -340,7 +342,7 @@ def main():
     batch_total = process_images(
         args, client_context, images, model, image_processor, text_tokenizer
     )
-    
+
     report_throughput(args, images, batch_total)
 
 if __name__ == "__main__":
