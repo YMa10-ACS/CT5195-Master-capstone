@@ -101,6 +101,14 @@ def generate_from_embedding(model, generations, device, tokens, token_embd, max_
 # Reconstruct the visual embeddings and generate text while recording stage timings.
 def process_embedding_request(model, tokenizer, metrics):
 
+    device = app.config["device"]
+    prompt = app.config["prompt"]
+    max_new_tokens = app.config["max_new_tokens"]
+
+    metrics.start_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
+    projected, splitted_image_ratio, generations = reconstruct_from_request(device)
+    metrics.stop_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
+
     app.logger.info(
         "receive_embedding parameters:\n"
         f"  device: {device}\n"
@@ -110,14 +118,6 @@ def process_embedding_request(model, tokenizer, metrics):
         f"  max_new_tokens: {max_new_tokens}\n"
         f"  generations: {generations}"
     )
-
-    device = app.config["device"]
-    prompt = app.config["prompt"]
-    max_new_tokens = app.config["max_new_tokens"]
-
-    metrics.start_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
-    projected, splitted_image_ratio, generations = reconstruct_from_request(device)
-    metrics.stop_counter(metric_names.CLOUD_RECONSTRUCT_TIME)
 
     metrics.start_counter(metric_names.CLOUD_PROMPT_TIME)
     tokens = get_prompt_tokens(model, tokenizer, device, prompt, splitted_image_ratio)

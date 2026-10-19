@@ -103,10 +103,12 @@ def generate(model, generations, device, input_ids, token_embd, attention_mask=N
             
             if timing_metrics is not None:
                 timing_metrics.start_counter(metric_names.CLOUD_GENERATE_HEAD_TIME)
+
             if not model.decoder.lm_use_tokens:
                 current_logits = model.decoder.head(last_token_output_from_prefill) 
             else:
                 current_logits = last_token_output_from_prefill 
+                
             if timing_metrics is not None:
                 timing_metrics.add_counter(metric_names.CLOUD_GENERATE_HEAD_TIME)
 
@@ -183,10 +185,11 @@ def generate(model, generations, device, input_ids, token_embd, attention_mask=N
             if not newly_generated_ids_list: # Handle case where max_new_tokens might be 0
                 return torch.empty((batch_size,0), dtype=torch.long, device=input_ids.device)
 
-            if timing_metrics is not None:
-                timing_metrics.start_counter(metric_names.CLOUD_GENERATE_POSTPROCESS_TIME)
             generated_ids = torch.cat(newly_generated_ids_list, dim=1)
 
+
+            if timing_metrics is not None:
+                timing_metrics.start_counter(metric_names.CLOUD_GENERATE_POSTPROCESS_TIME)
             # Post-process to handle EOS token.
             if model.tokenizer.eos_token_id is not None and generated_ids.numel() > 0: # Ensure generated_ids is not empty
                 seq_len = generated_ids.size(1)
