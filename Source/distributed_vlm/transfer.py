@@ -86,7 +86,7 @@ class EmbeddingTransferClient:
 
         return True
 
-    def transfer(self, projected, splitted_image_ratio, prompt, generations):
+    def transfer(self, projected, splitted_image_ratio, generations):
         if is_attestation_enabled() and not self.attested:
             raise TransferError("Remote attestation must succeed before transfer")
         return transfer_embedding(
@@ -95,7 +95,6 @@ class EmbeddingTransferClient:
             self.transport_protocol,
             projected,
             splitted_image_ratio,
-            prompt,
             generations,
             verify=self._request_verify(),
         )
@@ -157,7 +156,6 @@ def transfer_embedding(
     transport_protocol,
     projected,
     splitted_image_ratio,
-    prompt,
     generations,
     verify=None,
 ):
@@ -167,7 +165,6 @@ def transfer_embedding(
     metadata = {
         "shape": list(data.shape),
         "dtype": str(data.dtype),
-        "prompt": str(prompt),
         "splitted_image_ratio": list(splitted_image_ratio),
         "generations": int(generations),
     }

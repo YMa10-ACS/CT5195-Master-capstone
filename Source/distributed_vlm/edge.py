@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument("--max_images", type=int, default=None,
                         help="Maximum number of images to process in batch mode")
     parser.add_argument("--prompt", type=str, default="What is this?",
-                        help="Text prompt to feed the model")
+                        help="Text prompt for local inference; cloud inference uses the cloud prompt configuration")
     parser.add_argument("--generations", type=int, default=5,
                         help="Num. of outputs to generate")
     parser.add_argument("--max_new_tokens", type=int, default=300,
@@ -248,7 +248,6 @@ def process_image(args, transfer_client, image_path, model, image_processor, tex
             result_list, transfer_metrics = transfer_client.transfer(
                 projected,
                 splitted_image_ratio,
-                args.prompt,
                 args.generations,
             )
         except TransferError as error:

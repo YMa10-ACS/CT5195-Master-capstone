@@ -63,7 +63,7 @@ class TransferEmbeddingTests(unittest.TestCase):
         })
 
         results, metrics = transfer_embedding(
-            session, "10.0.0.1", "http", self.projected, (1, 2), "Describe", 2
+            session, "10.0.0.1", "http", self.projected, (1, 2), 2
         )
 
         session.post.assert_called_once()
@@ -76,7 +76,6 @@ class TransferEmbeddingTests(unittest.TestCase):
         self.assertEqual(metadata, {
             "shape": [1, 1, 2],
             "dtype": "float32",
-            "prompt": "Describe",
             "splitted_image_ratio": [1, 2],
             "generations": 2,
         })
@@ -98,7 +97,7 @@ class TransferEmbeddingTests(unittest.TestCase):
                     "metrics": {metric_names.CLOUD_TOTAL_REQUEST: 0.0},
                 })
                 transfer_embedding(
-                    session, "cloud.example", transport, self.projected, (1, 1), "", 1
+                    session, "cloud.example", transport, self.projected, (1, 1), 1
                 )
                 self.assertEqual(session.post.call_args.args[0], expected_url)
                 self.assertIs(session.post.call_args.kwargs["verify"], False)
@@ -107,7 +106,7 @@ class TransferEmbeddingTests(unittest.TestCase):
         session = Mock()
         with self.assertRaisesRegex(ValueError, "Unsupported transport protocol"):
             transfer_embedding(
-                session, "cloud.example", "ftp", self.projected, (1, 1), "", 1
+                session, "cloud.example", "ftp", self.projected, (1, 1), 1
             )
         session.post.assert_not_called()
 
@@ -115,7 +114,7 @@ class TransferEmbeddingTests(unittest.TestCase):
         session = self._session_with_response({"result": ["result"]})
         with self.assertRaisesRegex(TransferError, "missing the metrics object"):
             transfer_embedding(
-                session, "cloud.example", "http", self.projected, (1, 1), "", 1
+                session, "cloud.example", "http", self.projected, (1, 1), 1
             )
 
     @patch("transfer.requests.Session")
@@ -128,8 +127,8 @@ class TransferEmbeddingTests(unittest.TestCase):
 
         with EmbeddingTransferClient("cloud.example", "http") as client:
             client.attested = True
-            client.transfer(self.projected, (1, 1), "", 1)
-            client.transfer(self.projected, (1, 1), "", 1)
+            client.transfer(self.projected, (1, 1), 1)
+            client.transfer(self.projected, (1, 1), 1)
 
         session_factory.assert_called_once_with()
         self.assertEqual(session.post.call_count, 2)
@@ -149,7 +148,7 @@ class TransferEmbeddingTests(unittest.TestCase):
             f"{SECRETS_DIR}/cert.pem",
         ) as client:
             client.attested = True
-            client.transfer(self.projected, (1, 1), "", 1)
+            client.transfer(self.projected, (1, 1), 1)
 
         self.assertEqual(
             session.post.call_args.kwargs["verify"],
@@ -188,7 +187,7 @@ class TransferEmbeddingTests(unittest.TestCase):
     def test_client_rejects_transfer_before_attestation(self, _session_factory):
         with EmbeddingTransferClient("127.0.0.1", "http") as client:
             with self.assertRaisesRegex(TransferError, "must succeed"):
-                client.transfer(self.projected, (1, 1), "", 1)
+                client.transfer(self.projected, (1, 1), 1)
 
 
 if __name__ == "__main__":
